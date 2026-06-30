@@ -33,6 +33,10 @@ const STOCK_NAMES = {
   'RENDA+2060': 'Tesouro Renda+ Apos. Extra 2060',
 };
 
+const CACHE_TTL = 5 * 60 * 1000;
+const priceCache = { data: {}, timestamp: 0 };
+const usdBrlCache = { data: null, timestamp: 0 };
+
 export function resolveName(ticker) {
   return STOCK_NAMES[ticker.toUpperCase()] || ticker.toUpperCase();
 }
@@ -62,16 +66,31 @@ async function fetchTesouroPrice(slug) {
 }
 
 export async function fetchUsdBrl() {
+  if (Date.now() - usdBrlCache.timestamp < CACHE_TTL && usdBrlCache.data !== null) {
+    return usdBrlCache.data;
+  }
   try {
     const res = await fetch('https://economia.awesomeapi.com.br/last/USD-BRL');
     const data = await res.json();
-    return parseFloat(data.USDBRL?.bid) || 5.50;
+    const rate = parseFloat(data.USDBRL?.bid) || 5.50;
+    usdBrlCache.data = rate;
+    usdBrlCache.timestamp = Date.now();
+    return rate;
   } catch {
-    return 5.50;
+    return usdBrlCache.data || 5.50;
   }
 }
 
 export async function fetchPrices(tickers) {
+  const now = Date.now();
+  const cached = Date.now() - priceCache.timestamp < CACHE_TTL;
+
+  if (cached && tickers.every(t => priceCache.data[t.toUpperCase()] !== undefined)) {
+    const result = {};
+    for (const t of tickers) result[t.toUpperCase()] = priceCache.data[t.toUpperCase()];
+    return result;
+  }
+
   const result = {};
   const stocks = tickers.filter(t => !isCrypto(t) && !isTesouro(t));
   const cryptos = tickers.filter(t => isCrypto(t));
@@ -118,6 +137,9 @@ export async function fetchPrices(tickers) {
     });
     await Promise.all(promises);
   }
+
+  Object.assign(priceCache.data, result);
+  priceCache.timestamp = now;
 
   return result;
 }
