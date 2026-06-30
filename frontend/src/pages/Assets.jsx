@@ -120,8 +120,8 @@ export default function Assets() {
                 <input type="number" step="any" value={form.quantity} onChange={e => setForm({ ...form, quantity: e.target.value })} />
               </div>
               <div className="form-group">
-                <label>Preço Médio</label>
-                <input type="number" step="0.01" value={form.averagePrice} onChange={e => setForm({ ...form, averagePrice: e.target.value })} />
+                <label>Preço Médio {form.category === 'CRIPTO' ? '(USD)' : '(BRL)'}</label>
+                <input type="number" step="0.01" value={form.averagePrice} onChange={e => setForm({ ...form, averagePrice: e.target.value })} placeholder={form.category === 'CRIPTO' ? 'Ex: 70000.00 (em dólar)' : 'Ex: 25.50'} />
               </div>
             </div>
             <div style={{ display: 'flex', gap: '0.5rem', marginTop: '0.5rem' }}>
