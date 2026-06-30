@@ -1,0 +1,44 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id        Int      @id @default(autoincrement())
+  name      String
+  email     String   @unique
+  password  String
+  createdAt DateTime @default(now())
+  assets    Asset[]
+}
+
+model Asset {
+  id           Int        @id @default(autoincrement())
+  ticker       String
+  name         String
+  category     String
+  quantity     Float      @default(0)
+  averagePrice Float      @default(0)
+  ceilingPrice Float?
+  currentPrice Float      @default(0)
+  userId       Int
+  user         User       @relation(fields: [userId], references: [id])
+  dividends    Dividend[]
+  createdAt    DateTime   @default(now())
+  updatedAt    DateTime   @updatedAt
+
+  @@unique([ticker, userId])
+}
+
+model Dividend {
+  id      Int      @id @default(autoincrement())
+  amount  Float
+  date    DateTime
+  type    String   @default("DIVIDENDO")
+  assetId Int
+  asset   Asset    @relation(fields: [assetId], references: [id], onDelete: Cascade)
+}

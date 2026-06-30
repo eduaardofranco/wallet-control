@@ -1,0 +1,13 @@
+{
+  "name": "carteira-investimentos",
+  "private": true,
+  "scripts": {
+    "dev": "npx concurrently -n api,web -c blue,green \"cd backend && npm run dev\" \"cd frontend && npm run dev\""
+  },
+  "devDependencies": {
+    "concurrently": "^9.1.2"
+  },
+  "dependencies": {
+    "xlsx": "^0.18.5"
+  }
+}

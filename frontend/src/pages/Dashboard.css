@@ -1,0 +1,253 @@
+.page-title {
+  font-size: 1.6rem;
+  margin-bottom: 1.5rem;
+  color: var(--gray-900);
+}
+
+.hide-toggle {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 0.85rem;
+  padding: 0.4rem 0.9rem;
+  white-space: nowrap;
+}
+
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+}
+
+.stat-card {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.stat-icon {
+  width: 48px;
+  height: 48px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.3rem;
+  flex-shrink: 0;
+}
+
+.stat-icon.blue { background: #e5e5e5; color: #2d2d2d; }
+.stat-icon.green { background: #dcfce7; color: #16a34a; }
+.stat-icon.red { background: #fee2e2; color: #dc2626; }
+
+.stat-label {
+  font-size: 0.8rem;
+  color: var(--gray-500);
+  margin-bottom: 0.1rem;
+}
+
+.stat-value {
+  font-size: 1.3rem;
+  font-weight: 700;
+}
+
+.stat-change {
+  font-size: 0.8rem;
+  font-weight: 600;
+}
+
+.stat-change.positive { color: var(--success); }
+.stat-change.negative { color: var(--danger); }
+
+.dashboard-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+}
+
+.dashboard-grid h3 {
+  margin-bottom: 1rem;
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 1rem;
+}
+
+.empty-state {
+  color: var(--gray-500);
+  text-align: center;
+  padding: 2rem 0;
+  font-size: 0.9rem;
+}
+
+/* Assets table */
+.assets-table {
+  width: 100%;
+}
+
+.assets-table th {
+  white-space: nowrap;
+}
+
+.asset-cell {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  color: inherit;
+  text-decoration: none;
+}
+
+.asset-cell:hover {
+  color: var(--primary);
+}
+
+.asset-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.dot-acao { background: #2d2d2d; }
+.dot-fii { background: #16a34a; }
+.dot-etf { background: #f59e0b; }
+.dot-bdr { background: #7c3aed; }
+.dot-cripto { background: #c2410c; }
+.dot-renda_fixa { background: #4338ca; }
+
+.var-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  padding: 0.15rem 0.5rem;
+  border-radius: 20px;
+  font-size: 0.82rem;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.var-up {
+  background: #dcfce7;
+  color: #166534;
+}
+
+.var-down {
+  background: #fee2e2;
+  color: #991b1b;
+}
+
+.pct-bar-container {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  min-width: 120px;
+}
+
+.pct-bar-container span {
+  font-size: 0.82rem;
+  font-weight: 600;
+  white-space: nowrap;
+  color: var(--gray-700);
+}
+
+.pct-bar {
+  height: 6px;
+  border-radius: 3px;
+  background: var(--primary);
+  min-width: 2px;
+  flex-shrink: 0;
+}
+
+/* Category sections */
+.category-section {
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+  margin-bottom: 1rem;
+  overflow: hidden;
+}
+
+.category-header {
+  display: flex;
+  align-items: center;
+  padding: 1rem 1.5rem;
+  cursor: pointer;
+  transition: background 0.15s;
+  gap: 1.5rem;
+  border-bottom: 1px solid transparent;
+}
+
+.category-header:hover {
+  background: var(--gray-100);
+}
+
+.category-section:has(.category-body) .category-header {
+  border-bottom: 1px solid var(--gray-200);
+}
+
+.category-title {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  min-width: 140px;
+}
+
+.category-icon {
+  font-size: 1.4rem;
+}
+
+.category-name {
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: var(--gray-900);
+}
+
+.category-stats {
+  display: flex;
+  align-items: center;
+  gap: 2rem;
+  flex: 1;
+}
+
+.cat-stat {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  min-width: 90px;
+}
+
+.cat-stat-label {
+  font-size: 0.72rem;
+  color: var(--gray-500);
+  text-transform: uppercase;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+}
+
+.cat-stat-value {
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: var(--gray-900);
+}
+
+.cat-stat-value.positive { color: var(--success); }
+.cat-stat-value.negative { color: var(--danger); }
+
+.category-toggle {
+  color: var(--gray-500);
+  font-size: 1.2rem;
+  display: flex;
+  align-items: center;
+  flex-shrink: 0;
+}
+
+.category-body {
+  padding: 0 1rem 0.5rem;
+}
+
+.category-body .assets-table td,
+.category-body .assets-table th {
+  padding: 0.6rem 0.8rem;
+  font-size: 0.88rem;
+}
