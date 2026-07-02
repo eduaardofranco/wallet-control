@@ -19,7 +19,7 @@ npm run dev
 This starts the backend (port 3001) and frontend (port 5173) at the same time using `concurrently`.
 
 - **URL:** http://localhost:5173
-- Sign up for an account from the Register page, or seed one via `backend/prisma/seed.js`.
+- Sign up for your own account from the Register page, or run `npm run db:seed` inside `backend/` to get a demo account (`demo@example.com` / `demo12345`) pre-loaded with sample purchase history from the Excel import.
 
 ---
 

@@ -26,12 +26,12 @@ async function main() {
   const xlsxPath = '/Users/eduardofranco/Downloads/Carteira Completa última.xlsx';
   const wb = XLSX.readFile(xlsxPath);
 
-  // Create default user
-  const hash = await bcrypt.hash('123456', 10);
+  // Create demo user (does not touch any other existing account)
+  const hash = await bcrypt.hash('demo12345', 10);
   const user = await prisma.user.upsert({
-    where: { email: 'francoeduaardo@gmail.com' },
+    where: { email: 'demo@example.com' },
     update: {},
-    create: { name: 'Eduardo Franco', email: 'francoeduaardo@gmail.com', password: hash },
+    create: { name: 'Demo User', email: 'demo@example.com', password: hash },
   });
   console.log('User created/found:', user.email);
 
