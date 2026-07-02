@@ -18,8 +18,8 @@ npm run dev
 
 This starts the backend (port 3001) and frontend (port 5173) at the same time using `concurrently`.
 
-- **Login:** francoeduaardo@gmail.com / 123456
 - **URL:** http://localhost:5173
+- Sign up for an account from the Register page, or seed one via `backend/prisma/seed.js`.
 
 ---
 
