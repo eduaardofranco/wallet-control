@@ -1,25 +1,24 @@
 import { PrismaClient } from '@prisma/client';
-import { fetchPrices, fetchUsdBrl, isCrypto } from '../services/prices.js';
+import { fetchUsdBrl, isCrypto } from '../services/prices.js';
+import { aggregatePurchases } from '../services/purchases.js';
 
 const prisma = new PrismaClient();
 
 export async function overview(req, res) {
-  const assets = await prisma.asset.findMany({
+  const allAssets = await prisma.asset.findMany({
     where: { userId: req.userId },
-    include: { dividends: true },
+    include: { dividends: true, purchases: true },
   });
 
-  const tickers = assets.map(a => a.ticker);
-  const [prices, usdBrl] = await Promise.all([fetchPrices(tickers), fetchUsdBrl()]);
+  // The dashboard mirrors the Purchases page: an asset with no purchases logged isn't a real position.
+  const assets = allAssets.filter(a => a.purchases.length > 0);
+
+  const usdBrl = await fetchUsdBrl();
 
   for (const asset of assets) {
-    if (prices[asset.ticker] !== undefined) {
-      asset.currentPrice = prices[asset.ticker];
-      prisma.asset.update({
-        where: { id: asset.id },
-        data: { currentPrice: prices[asset.ticker] },
-      }).catch(() => {});
-    }
+    const { quantity, averagePrice } = aggregatePurchases(asset.purchases);
+    asset.quantity = quantity;
+    asset.averagePrice = averagePrice;
   }
 
   let totalInvested = 0;
@@ -28,8 +27,8 @@ export async function overview(req, res) {
   const byCategory = {};
 
   for (const asset of assets) {
-    const pmBrl = isCrypto(asset.ticker) ? asset.averagePrice * usdBrl : asset.averagePrice;
-    const invested = asset.quantity * pmBrl;
+    const avgPriceBrl = isCrypto(asset.ticker) ? asset.averagePrice * usdBrl : asset.averagePrice;
+    const invested = asset.quantity * avgPriceBrl;
     const current = asset.quantity * asset.currentPrice;
     totalInvested += invested;
     totalCurrent += current;
@@ -46,7 +45,7 @@ export async function overview(req, res) {
     byCategory[asset.category].count += 1;
   }
 
-  const alertas = assets
+  const alerts = assets
     .filter(a => a.ceilingPrice && a.currentPrice <= a.ceilingPrice)
     .map(a => ({
       ticker: a.ticker,
@@ -56,12 +55,12 @@ export async function overview(req, res) {
 
   const assetList = assets.map(a => {
     const crypto = isCrypto(a.ticker);
-    const pmBrl = crypto ? a.averagePrice * usdBrl : a.averagePrice;
-    const invested = a.quantity * pmBrl;
-    const saldo = a.quantity * a.currentPrice;
-    const divs = a.dividends.reduce((s, d) => s + d.amount, 0);
-    const variacao = pmBrl > 0 ? ((a.currentPrice - pmBrl) / pmBrl) * 100 : 0;
-    const rentabilidade = invested > 0 ? ((saldo - invested + divs) / invested) * 100 : 0;
+    const avgPriceBrl = crypto ? a.averagePrice * usdBrl : a.averagePrice;
+    const invested = a.quantity * avgPriceBrl;
+    const balance = a.quantity * a.currentPrice;
+    const dividendsTotal = a.dividends.reduce((s, d) => s + d.amount, 0);
+    const priceChange = avgPriceBrl > 0 ? ((a.currentPrice - avgPriceBrl) / avgPriceBrl) * 100 : 0;
+    const returnPct = invested > 0 ? ((balance - invested + dividendsTotal) / invested) * 100 : 0;
     return {
       id: a.id,
       ticker: a.ticker,
@@ -69,16 +68,16 @@ export async function overview(req, res) {
       category: a.category,
       quantity: a.quantity,
       averagePrice: a.averagePrice,
-      averagePriceBrl: pmBrl,
+      averagePriceBrl: avgPriceBrl,
       currentPrice: a.currentPrice,
       ceilingPrice: a.ceilingPrice,
       isCrypto: crypto,
-      variacao,
-      rentabilidade,
-      saldo,
-      percentCarteira: totalCurrent > 0 ? (saldo / totalCurrent) * 100 : 0,
+      priceChange,
+      returnPct,
+      balance,
+      percentPortfolio: totalCurrent > 0 ? (balance / totalCurrent) * 100 : 0,
     };
-  }).sort((a, b) => b.saldo - a.saldo);
+  }).sort((a, b) => b.balance - a.balance);
 
   res.json({
     totalInvested,
@@ -87,7 +86,7 @@ export async function overview(req, res) {
     profit: totalCurrent - totalInvested,
     profitPercent: totalInvested > 0 ? ((totalCurrent - totalInvested) / totalInvested) * 100 : 0,
     byCategory,
-    alertas,
+    alerts,
     assetList,
     usdBrl,
     totalAssets: assets.length,

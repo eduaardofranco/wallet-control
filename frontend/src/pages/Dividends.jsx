@@ -3,7 +3,7 @@ import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recha
 import api from '../services/api';
 
 function fmt(v) {
-  return v.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+  return v.toLocaleString('en-US', { style: 'currency', currency: 'BRL' });
 }
 
 export default function Dividends() {
@@ -13,7 +13,7 @@ export default function Dividends() {
     api.get('/dividends/summary').then(r => setSummary(r.data));
   }, []);
 
-  if (!summary) return <p>Carregando...</p>;
+  if (!summary) return <p>Loading...</p>;
 
   const monthlyData = Object.entries(summary.byMonth)
     .sort(([a], [b]) => a.localeCompare(b))
@@ -27,16 +27,16 @@ export default function Dividends() {
 
   return (
     <div>
-      <h1 className="page-title">Dividendos</h1>
+      <h1 className="page-title">Dividends</h1>
 
       <div className="card" style={{ marginBottom: '1.5rem' }}>
-        <h3 style={{ marginBottom: '0.3rem' }}>Total Recebido</h3>
+        <h3 style={{ marginBottom: '0.3rem' }}>Total Received</h3>
         <p style={{ fontSize: '2rem', fontWeight: 700, color: 'var(--success)' }}>{fmt(total)}</p>
       </div>
 
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
         <div className="card">
-          <h3 style={{ marginBottom: '1rem' }}>Dividendos por Mês</h3>
+          <h3 style={{ marginBottom: '1rem' }}>Dividends by Month</h3>
           {monthlyData.length > 0 ? (
             <ResponsiveContainer width="100%" height={300}>
               <BarChart data={monthlyData}>
@@ -47,16 +47,16 @@ export default function Dividends() {
               </BarChart>
             </ResponsiveContainer>
           ) : (
-            <p className="empty-state">Nenhum dividendo registrado</p>
+            <p className="empty-state">No dividends registered</p>
           )}
         </div>
 
         <div className="card">
-          <h3 style={{ marginBottom: '1rem' }}>Dividendos por Ativo</h3>
+          <h3 style={{ marginBottom: '1rem' }}>Dividends by Asset</h3>
           {assetData.length > 0 ? (
             <table>
               <thead>
-                <tr><th>Ativo</th><th>Total</th><th>% do Total</th></tr>
+                <tr><th>Asset</th><th>Total</th><th>% of Total</th></tr>
               </thead>
               <tbody>
                 {assetData.map(d => (
@@ -69,7 +69,7 @@ export default function Dividends() {
               </tbody>
             </table>
           ) : (
-            <p className="empty-state">Nenhum dividendo registrado</p>
+            <p className="empty-state">No dividends registered</p>
           )}
         </div>
       </div>

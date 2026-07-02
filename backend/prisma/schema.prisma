@@ -21,13 +21,12 @@ model Asset {
   ticker       String
   name         String
   category     String
-  quantity     Float      @default(0)
-  averagePrice Float      @default(0)
   ceilingPrice Float?
   currentPrice Float      @default(0)
   userId       Int
   user         User       @relation(fields: [userId], references: [id])
   dividends    Dividend[]
+  purchases    Purchase[]
   createdAt    DateTime   @default(now())
   updatedAt    DateTime   @updatedAt
 
@@ -41,4 +40,13 @@ model Dividend {
   type    String   @default("DIVIDENDO")
   assetId Int
   asset   Asset    @relation(fields: [assetId], references: [id], onDelete: Cascade)
+}
+
+model Purchase {
+  id       Int      @id @default(autoincrement())
+  quantity Float
+  price    Float
+  date     DateTime
+  assetId  Int
+  asset    Asset    @relation(fields: [assetId], references: [id], onDelete: Cascade)
 }

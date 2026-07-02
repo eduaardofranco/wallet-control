@@ -1,12 +1,10 @@
 import { PrismaClient } from '@prisma/client';
 import bcrypt from 'bcryptjs';
 import XLSX from 'xlsx';
-import { fileURLToPath } from 'url';
-import path from 'path';
 
 const prisma = new PrismaClient();
 
-function excelDateToJS(serial) {
+export function excelDateToJS(serial) {
   if (!serial || typeof serial !== 'number') return null;
   const utcDays = Math.floor(serial - 25569);
   return new Date(utcDays * 86400 * 1000);
@@ -49,8 +47,6 @@ async function main() {
 
     assets[ticker] = {
       ticker,
-      quantity: Number(row[1]) || 0,
-      averagePrice: Number(row[2]) || 0,
       currentPrice: Number(row[3]) || 0,
       ceilingPrice: row[9] ? Number(row[9]) : null,
       category: 'ACAO',
@@ -70,23 +66,15 @@ async function main() {
     if (assets[ticker]) {
       assets[ticker].category = cat;
     } else if (ticker !== 'TOTAL') {
-      assets[ticker] = {
-        ticker,
-        name: ticker,
-        category: cat,
-        quantity: 0,
-        averagePrice: 0,
-        currentPrice: 0,
-        ceilingPrice: null,
-      };
+      assets[ticker] = { ticker, name: ticker, category: cat, currentPrice: 0, ceilingPrice: null };
     }
   }
 
-  // --- Parse Compras to compute quantity, averagePrice for non-stock assets ---
+  // --- Parse Compras: each row becomes an individual Purchase entry (not aggregated) ---
   const compras = XLSX.utils.sheet_to_json(wb.Sheets['Compras'], { header: 1 });
+  const purchasesByTicker = {};
 
-  function processPurchases(rows, tickerCol, catCol, qtyCol, priceCol) {
-    const buys = {};
+  function processPurchases(rows, tickerCol, catCol, dateCol, qtyCol, priceCol) {
     for (let i = 4; i < rows.length; i++) {
       const row = rows[i];
       if (!row || !row[tickerCol] || typeof row[tickerCol] !== 'string') continue;
@@ -94,41 +82,26 @@ async function main() {
       const cat = categoryMap(row[catCol]);
       if (!ticker || !cat) continue;
 
-      const qty = Number(row[qtyCol]) || 0;
+      const quantity = Number(row[qtyCol]) || 0;
       const price = Number(row[priceCol]) || 0;
-      if (qty === 0) continue;
+      if (quantity === 0) continue;
 
-      if (!buys[ticker]) buys[ticker] = { totalQty: 0, totalCost: 0, category: cat };
-      buys[ticker].totalQty += qty;
-      buys[ticker].totalCost += qty * price;
-    }
+      const date = excelDateToJS(row[dateCol]) || new Date();
 
-    for (const [ticker, data] of Object.entries(buys)) {
-      if (assets[ticker]) {
-        // Update quantity and average price if not already set from Projeções
-        if (assets[ticker].quantity === 0 && data.totalQty > 0) {
-          assets[ticker].quantity = data.totalQty;
-          assets[ticker].averagePrice = data.totalCost / data.totalQty;
-        }
-        assets[ticker].category = data.category;
-      } else {
-        assets[ticker] = {
-          ticker,
-          name: ticker,
-          category: data.category,
-          quantity: data.totalQty,
-          averagePrice: data.totalCost / data.totalQty,
-          currentPrice: 0,
-          ceilingPrice: null,
-        };
+      if (!assets[ticker]) {
+        assets[ticker] = { ticker, name: ticker, category: cat, currentPrice: 0, ceilingPrice: null };
       }
+      assets[ticker].category = cat;
+
+      if (!purchasesByTicker[ticker]) purchasesByTicker[ticker] = [];
+      purchasesByTicker[ticker].push({ quantity, price, date });
     }
   }
 
   // Left side purchases (cols 0-5)
-  processPurchases(compras, 0, 1, 3, 4);
+  processPurchases(compras, 0, 1, 2, 3, 4);
   // Right side purchases (cols 8-13)
-  processPurchases(compras, 8, 9, 11, 12);
+  processPurchases(compras, 8, 9, 10, 11, 12);
 
   // --- Set friendly names ---
   const nameMap = {
@@ -143,31 +116,42 @@ async function main() {
     'RENDA FIXA': 'Renda Fixa',
   };
 
-  // --- Insert assets into database ---
+  // --- Insert assets and their purchases into database ---
   await prisma.asset.deleteMany({ where: { userId: user.id } });
 
-  let count = 0;
+  let assetCount = 0;
+  let purchaseCount = 0;
   for (const [ticker, data] of Object.entries(assets)) {
     if (ticker === 'TOTAL') continue;
-    await prisma.asset.create({
+    const purchases = purchasesByTicker[ticker] || [];
+
+    const created = await prisma.asset.create({
       data: {
         ticker: data.ticker,
         name: nameMap[data.ticker] || data.ticker,
         category: data.category,
-        quantity: Math.round(data.quantity * 100000000) / 100000000,
-        averagePrice: Math.round(data.averagePrice * 100) / 100,
         currentPrice: Math.round(data.currentPrice * 100) / 100,
         ceilingPrice: data.ceilingPrice ? Math.round(data.ceilingPrice * 100) / 100 : null,
         userId: user.id,
+        purchases: {
+          create: purchases.map(p => ({
+            quantity: Math.round(p.quantity * 100000000) / 100000000,
+            price: Math.round(p.price * 100) / 100,
+            date: p.date,
+          })),
+        },
       },
     });
-    count++;
-    console.log(`  + ${data.ticker} (${data.category}) qty=${data.quantity} pm=${data.averagePrice.toFixed(2)}`);
+    assetCount++;
+    purchaseCount += purchases.length;
+    console.log(`  + ${created.ticker} (${created.category}) - ${purchases.length} purchase(s)`);
   }
 
-  console.log(`\nImported ${count} assets for user ${user.email}`);
+  console.log(`\nImported ${assetCount} assets (${purchaseCount} purchases) for user ${user.email}`);
 }
 
-main()
-  .then(() => prisma.$disconnect())
-  .catch(e => { console.error(e); prisma.$disconnect(); process.exit(1); });
+if (import.meta.url === `file://${process.argv[1]}`) {
+  main()
+    .then(() => prisma.$disconnect())
+    .catch(e => { console.error(e); prisma.$disconnect(); process.exit(1); });
+}

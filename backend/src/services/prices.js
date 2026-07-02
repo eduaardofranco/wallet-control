@@ -1,25 +1,6 @@
-const CRYPTO_IDS = {
-  BTC: 'bitcoin',
-  ETH: 'ethereum',
-  XRP: 'ripple',
-  SOL: 'solana',
-  ADA: 'cardano',
-  DOGE: 'dogecoin',
-  DOT: 'polkadot',
-  MATIC: 'matic-network',
-  LINK: 'chainlink',
-  AVAX: 'avalanche-2',
-};
-
-const TESOURO_SLUGS = {
-  'IPCA+2050': 'tesouro-ipca-2050',
-  'RENDA+2060': 'tesouro-renda-aposentadoria-extra-2060',
-  'IPCA+2029': 'tesouro-ipca-2029',
-  'IPCA+2035': 'tesouro-ipca-2035',
-  'IPCA+2045': 'tesouro-ipca-2045',
-  'SELIC2029': 'tesouro-selic-2029',
-  'PREFIXADO2028': 'tesouro-prefixado-2028',
-};
+const CRYPTO_TICKERS = new Set([
+  'BTC', 'ETH', 'XRP', 'SOL', 'ADA', 'DOGE', 'DOT', 'MATIC', 'LINK', 'AVAX',
+]);
 
 const STOCK_NAMES = {
   BBAS3: 'Banco do Brasil', BBSE3: 'BB Seguridade', RANI3: 'Irani',
@@ -34,7 +15,6 @@ const STOCK_NAMES = {
 };
 
 const CACHE_TTL = 5 * 60 * 1000;
-const priceCache = { data: {}, timestamp: 0 };
 const usdBrlCache = { data: null, timestamp: 0 };
 
 export function resolveName(ticker) {
@@ -42,27 +22,7 @@ export function resolveName(ticker) {
 }
 
 export function isCrypto(ticker) {
-  return !!CRYPTO_IDS[ticker.toUpperCase()];
-}
-
-export function isTesouro(ticker) {
-  return !!TESOURO_SLUGS[ticker.toUpperCase()];
-}
-
-async function fetchTesouroPrice(slug) {
-  try {
-    const res = await fetch(`https://statusinvest.com.br/tesouro/${slug}`, {
-      headers: { 'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7)' },
-    });
-    const html = await res.text();
-    const match = html.match(/<strong class="value">\s*([\d.,]+)/);
-    if (match) {
-      return parseFloat(match[1].replace('.', '').replace(',', '.'));
-    }
-  } catch (err) {
-    console.error('Error fetching tesouro price for', slug, err.message);
-  }
-  return null;
+  return CRYPTO_TICKERS.has(ticker.toUpperCase());
 }
 
 export async function fetchUsdBrl() {
@@ -79,67 +39,4 @@ export async function fetchUsdBrl() {
   } catch {
     return usdBrlCache.data || 5.50;
   }
-}
-
-export async function fetchPrices(tickers) {
-  const now = Date.now();
-  const cached = Date.now() - priceCache.timestamp < CACHE_TTL;
-
-  if (cached && tickers.every(t => priceCache.data[t.toUpperCase()] !== undefined)) {
-    const result = {};
-    for (const t of tickers) result[t.toUpperCase()] = priceCache.data[t.toUpperCase()];
-    return result;
-  }
-
-  const result = {};
-  const stocks = tickers.filter(t => !isCrypto(t) && !isTesouro(t));
-  const cryptos = tickers.filter(t => isCrypto(t));
-  const tesouros = tickers.filter(t => isTesouro(t));
-
-  if (stocks.length > 0) {
-    try {
-      const joined = stocks.join(',');
-      const res = await fetch(`https://brapi.dev/api/quote/${joined}?fundamental=false`);
-      const data = await res.json();
-      if (data.results) {
-        for (const item of data.results) {
-          result[item.symbol] = item.regularMarketPrice;
-        }
-      }
-    } catch (err) {
-      console.error('Error fetching stock prices:', err.message);
-    }
-  }
-
-  if (cryptos.length > 0) {
-    try {
-      const ids = cryptos.map(t => CRYPTO_IDS[t.toUpperCase()]).filter(Boolean).join(',');
-      const res = await fetch(`https://api.coingecko.com/api/v3/simple/price?ids=${ids}&vs_currencies=brl`);
-      const data = await res.json();
-      for (const ticker of cryptos) {
-        const id = CRYPTO_IDS[ticker.toUpperCase()];
-        if (id && data[id]?.brl) {
-          result[ticker.toUpperCase()] = data[id].brl;
-        }
-      }
-    } catch (err) {
-      console.error('Error fetching crypto prices:', err.message);
-    }
-  }
-
-  if (tesouros.length > 0) {
-    const promises = tesouros.map(async (ticker) => {
-      const slug = TESOURO_SLUGS[ticker.toUpperCase()];
-      if (slug) {
-        const price = await fetchTesouroPrice(slug);
-        if (price) result[ticker.toUpperCase()] = price;
-      }
-    });
-    await Promise.all(promises);
-  }
-
-  Object.assign(priceCache.data, result);
-  priceCache.timestamp = now;
-
-  return result;
 }

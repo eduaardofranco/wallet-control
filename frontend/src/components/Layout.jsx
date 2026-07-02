@@ -10,16 +10,16 @@ export default function Layout() {
     <div className="layout">
       <aside className="sidebar">
         <div className="sidebar-header">
-          <h2>Carteira</h2>
+          <h2>Wallet</h2>
           <span className="user-name">{user?.name}</span>
         </div>
         <nav className="sidebar-nav">
           <NavLink to="/" end><FiHome /> Dashboard</NavLink>
-          <NavLink to="/ativos"><FiPieChart /> Ativos</NavLink>
-          <NavLink to="/dividendos"><FiDollarSign /> Dividendos</NavLink>
+          <NavLink to="/purchases"><FiPieChart /> Purchases</NavLink>
+          <NavLink to="/dividends"><FiDollarSign /> Dividends</NavLink>
         </nav>
         <button className="logout-btn" onClick={logout}>
-          <FiLogOut /> Sair
+          <FiLogOut /> Log Out
         </button>
       </aside>
       <main className="main-content">

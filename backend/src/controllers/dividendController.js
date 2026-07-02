@@ -6,7 +6,7 @@ export async function list(req, res) {
   const asset = await prisma.asset.findFirst({
     where: { id: Number(req.params.assetId), userId: req.userId },
   });
-  if (!asset) return res.status(404).json({ error: 'Ativo não encontrado' });
+  if (!asset) return res.status(404).json({ error: 'Asset not found' });
 
   const dividends = await prisma.dividend.findMany({
     where: { assetId: asset.id },
@@ -19,11 +19,11 @@ export async function create(req, res) {
   const asset = await prisma.asset.findFirst({
     where: { id: Number(req.params.assetId), userId: req.userId },
   });
-  if (!asset) return res.status(404).json({ error: 'Ativo não encontrado' });
+  if (!asset) return res.status(404).json({ error: 'Asset not found' });
 
   const { amount, date, type } = req.body;
   if (!amount || !date) {
-    return res.status(400).json({ error: 'Valor e data são obrigatórios' });
+    return res.status(400).json({ error: 'Amount and date are required' });
   }
 
   const dividend = await prisma.dividend.create({
@@ -43,11 +43,11 @@ export async function remove(req, res) {
     include: { asset: true },
   });
   if (!dividend || dividend.asset.userId !== req.userId) {
-    return res.status(404).json({ error: 'Dividendo não encontrado' });
+    return res.status(404).json({ error: 'Dividend not found' });
   }
 
   await prisma.dividend.delete({ where: { id: dividend.id } });
-  res.json({ message: 'Dividendo removido' });
+  res.json({ message: 'Dividend removed' });
 }
 
 export async function summary(req, res) {

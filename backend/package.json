@@ -1,12 +1,14 @@
 {
-  "name": "carteira-investimentos-api",
+  "name": "wallet-control-api",
   "version": "1.0.0",
   "type": "module",
   "scripts": {
     "dev": "node --watch src/server.js",
     "start": "node src/server.js",
     "db:migrate": "npx prisma migrate dev",
-    "db:seed": "node prisma/seed.js"
+    "db:seed": "node prisma/seed.js",
+    "lint": "eslint .",
+    "test": "vitest run"
   },
   "dependencies": {
     "@prisma/client": "^6.9.0",
@@ -17,6 +19,10 @@
     "xlsx": "^0.18.5"
   },
   "devDependencies": {
-    "prisma": "^6.9.0"
+    "@eslint/js": "^9.13.0",
+    "eslint": "^9.13.0",
+    "globals": "^15.11.0",
+    "prisma": "^6.9.0",
+    "vitest": "^2.1.9"
   }
 }

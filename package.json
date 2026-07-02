@@ -1,5 +1,5 @@
 {
-  "name": "carteira-investimentos",
+  "name": "wallet-control",
   "private": true,
   "scripts": {
     "dev": "npx concurrently -n api,web -c blue,green \"cd backend && npm run dev\" \"cd frontend && npm run dev\""

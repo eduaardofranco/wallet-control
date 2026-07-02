@@ -4,7 +4,7 @@ import Layout from './components/Layout';
 import Login from './pages/Login';
 import Register from './pages/Register';
 import Dashboard from './pages/Dashboard';
-import Assets from './pages/Assets';
+import Purchases from './pages/Purchases';
 import AssetDetail from './pages/AssetDetail';
 import Dividends from './pages/Dividends';
 
@@ -22,9 +22,9 @@ function App() {
           <Route path="/register" element={<Register />} />
           <Route path="/" element={<PrivateRoute><Layout /></PrivateRoute>}>
             <Route index element={<Dashboard />} />
-            <Route path="ativos" element={<Assets />} />
-            <Route path="ativos/:id" element={<AssetDetail />} />
-            <Route path="dividendos" element={<Dividends />} />
+            <Route path="purchases" element={<Purchases />} />
+            <Route path="assets/:id" element={<AssetDetail />} />
+            <Route path="dividends" element={<Dividends />} />
           </Route>
         </Routes>
       </BrowserRouter>

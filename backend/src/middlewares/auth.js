@@ -2,7 +2,7 @@ import jwt from 'jsonwebtoken';
 
 export function authenticate(req, res, next) {
   const header = req.headers.authorization;
-  if (!header) return res.status(401).json({ error: 'Token não fornecido' });
+  if (!header) return res.status(401).json({ error: 'Token not provided' });
 
   const token = header.replace('Bearer ', '');
   try {
@@ -10,6 +10,6 @@ export function authenticate(req, res, next) {
     req.userId = payload.id;
     next();
   } catch {
-    return res.status(401).json({ error: 'Token inválido' });
+    return res.status(401).json({ error: 'Invalid token' });
   }
 }

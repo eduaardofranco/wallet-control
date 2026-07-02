@@ -17,25 +17,25 @@ export default function Login() {
       await login(email, password);
       navigate('/');
     } catch (err) {
-      setError(err.response?.data?.error || 'Erro ao fazer login');
+      setError(err.response?.data?.error || 'Error logging in');
     }
   }
 
   return (
     <div className="auth-page">
       <form className="auth-form card" onSubmit={handleSubmit}>
-        <h1>Carteira</h1>
+        <h1>Wallet</h1>
         {error && <p className="error-msg">{error}</p>}
         <div className="form-group">
           <label>Email</label>
           <input type="email" value={email} onChange={e => setEmail(e.target.value)} required />
         </div>
         <div className="form-group">
-          <label>Senha</label>
+          <label>Password</label>
           <input type="password" value={password} onChange={e => setPassword(e.target.value)} required />
         </div>
-        <button type="submit" className="btn-primary" style={{ width: '100%' }}>Entrar</button>
-        <p className="auth-link">Não tem conta? <Link to="/register">Cadastre-se</Link></p>
+        <button type="submit" className="btn-primary" style={{ width: '100%' }}>Log In</button>
+        <p className="auth-link">Don&apos;t have an account? <Link to="/register">Sign up</Link></p>
       </form>
     </div>
   );

@@ -18,18 +18,18 @@ export default function Register() {
       await register(name, email, password);
       navigate('/');
     } catch (err) {
-      setError(err.response?.data?.error || 'Erro ao cadastrar');
+      setError(err.response?.data?.error || 'Error signing up');
     }
   }
 
   return (
     <div className="auth-page">
       <form className="auth-form card" onSubmit={handleSubmit}>
-        <h1>Cadastro</h1>
-        <p className="auth-subtitle">Crie sua conta para gerenciar investimentos</p>
+        <h1>Sign Up</h1>
+        <p className="auth-subtitle">Create your account to manage your investments</p>
         {error && <p className="error-msg">{error}</p>}
         <div className="form-group">
-          <label>Nome</label>
+          <label>Name</label>
           <input value={name} onChange={e => setName(e.target.value)} required />
         </div>
         <div className="form-group">
@@ -37,11 +37,11 @@ export default function Register() {
           <input type="email" value={email} onChange={e => setEmail(e.target.value)} required />
         </div>
         <div className="form-group">
-          <label>Senha</label>
+          <label>Password</label>
           <input type="password" value={password} onChange={e => setPassword(e.target.value)} required minLength={6} />
         </div>
-        <button type="submit" className="btn-primary" style={{ width: '100%' }}>Cadastrar</button>
-        <p className="auth-link">Já tem conta? <Link to="/login">Entrar</Link></p>
+        <button type="submit" className="btn-primary" style={{ width: '100%' }}>Sign Up</button>
+        <p className="auth-link">Already have an account? <Link to="/login">Log in</Link></p>
       </form>
     </div>
   );
