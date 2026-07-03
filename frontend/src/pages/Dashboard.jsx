@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { PieChart, Pie, Cell, BarChart, Bar, XAxis, YAxis, ResponsiveContainer, Tooltip } from 'recharts';
-import { FiTrendingUp, FiTrendingDown, FiDollarSign, FiAlertTriangle, FiArrowUp, FiArrowDown, FiChevronDown, FiChevronUp, FiEye, FiEyeOff, FiEdit2, FiCheck, FiX } from 'react-icons/fi';
+import { FiTrendingUp, FiTrendingDown, FiDollarSign, FiArrowUp, FiArrowDown, FiChevronDown, FiChevronUp, FiEye, FiEyeOff, FiEdit2, FiCheck, FiX } from 'react-icons/fi';
 import api from '../services/api';
 import './Dashboard.css';
 
@@ -199,28 +199,6 @@ export default function Dashboard() {
             <p className="empty-state">Add purchases to see portfolio growth</p>
           )}
         </div>
-      </div>
-
-      <div className="card" style={{ marginBottom: '1.5rem' }}>
-        <h3><FiAlertTriangle style={{ color: 'var(--warning)' }} /> Below Ceiling Price</h3>
-        {data.alerts.length > 0 ? (
-          <table>
-            <thead>
-              <tr><th>Ticker</th><th>Current</th><th>Ceiling</th></tr>
-            </thead>
-            <tbody>
-              {data.alerts.map(a => (
-                <tr key={a.ticker}>
-                  <td><strong>{a.ticker}</strong></td>
-                  <td>{fmtAsset(a.currentPrice, a.isCrypto)}</td>
-                  <td>{fmt(a.ceilingPrice)}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        ) : (
-          <p className="empty-state">No assets below ceiling price</p>
-        )}
       </div>
 
       {categories.map(cat => {
