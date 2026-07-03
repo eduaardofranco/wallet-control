@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from 'recharts';
+import { PieChart, Pie, Cell, BarChart, Bar, XAxis, YAxis, ResponsiveContainer, Tooltip } from 'recharts';
 import { FiTrendingUp, FiTrendingDown, FiDollarSign, FiAlertTriangle, FiArrowUp, FiArrowDown, FiChevronDown, FiChevronUp, FiEye, FiEyeOff, FiEdit2, FiCheck, FiX } from 'react-icons/fi';
 import api from '../services/api';
 import './Dashboard.css';
@@ -27,6 +27,7 @@ const MASK = '•••••';
 
 export default function Dashboard() {
   const [data, setData] = useState(null);
+  const [purchases, setPurchases] = useState([]);
   const [openCats, setOpenCats] = useState({});
   const [hidden, setHidden] = useState(false);
   const [editingId, setEditingId] = useState(null);
@@ -37,6 +38,7 @@ export default function Dashboard() {
 
   function load() {
     api.get('/dashboard').then(r => setData(r.data));
+    api.get('/purchases').then(r => setPurchases(r.data));
   }
 
   useEffect(() => { load(); }, []);
@@ -67,6 +69,32 @@ export default function Dashboard() {
     value: val.current,
   }));
 
+  const investedByMonth = {};
+  for (const p of purchases) {
+    const month = p.date.slice(0, 7);
+    const amountBrl = p.quantity * p.price * (p.asset.category === 'CRIPTO' ? data.usdBrl : 1);
+    investedByMonth[month] = (investedByMonth[month] || 0) + amountBrl;
+  }
+  let cumulativeInvested = 0;
+  const growthData = Object.keys(investedByMonth).sort().map(month => {
+    cumulativeInvested += investedByMonth[month];
+    const [year, m] = month.split('-');
+    return { month: `${m}/${year.slice(2)}`, value: cumulativeInvested };
+  });
+
+  // Recharts calls this with a props shape we don't control; not a real component.
+  /* eslint-disable react/prop-types */
+  function renderGrowthTooltip(props) {
+    if (!props.active || !props.payload?.length) return null;
+    return (
+      <div style={{ background: 'white', border: '1px solid var(--gray-200, #e5e7eb)', borderRadius: 6, padding: '0.5rem 0.75rem', fontSize: 13, boxShadow: '0 1px 3px rgba(0,0,0,0.1)' }}>
+        <div style={{ color: 'var(--gray-500)' }}>{props.label}</div>
+        <div style={{ fontWeight: 600 }}>{fmt(props.payload[0].value)}</div>
+      </div>
+    );
+  }
+  /* eslint-enable react/prop-types */
+
   function toggleCat(cat) {
     setOpenCats(prev => ({ ...prev, [cat]: !prev[cat] }));
   }
@@ -82,7 +110,7 @@ export default function Dashboard() {
   return (
     <div>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
-        <h1 className="page-title" style={{ margin: 0 }}>Dashboard</h1>
+        <h1 className="page-title" style={{ margin: 0 }}>Overview</h1>
         <button className="btn-outline hide-toggle" onClick={() => { setHidden(h => !h); cancelEditPrice(); }}>
           {hidden ? <FiEyeOff /> : <FiEye />} {hidden ? 'Show values' : 'Hide values'}
         </button>
@@ -115,6 +143,62 @@ export default function Dashboard() {
             <p className="stat-value">{fmt(data.totalDividends)}</p>
           </div>
         </div>
+      </div>
+
+      <div className="dashboard-grid" style={{ marginBottom: '1.5rem' }}>
+        <div className="card">
+          <h3>Distribution by Category</h3>
+          {pieData.length > 0 ? (
+            <ResponsiveContainer width="100%" height={280}>
+              <PieChart>
+                <Pie data={pieData} dataKey="value" nameKey="name" cx="50%" cy="50%" outerRadius={100} label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}>
+                  {pieData.map((_, i) => <Cell key={i} fill={COLORS[i % COLORS.length]} />)}
+                </Pie>
+                <Tooltip formatter={v => fmt(v)} />
+              </PieChart>
+            </ResponsiveContainer>
+          ) : (
+            <p className="empty-state">Add assets to see the distribution</p>
+          )}
+        </div>
+
+        <div className="card">
+          <h3>Portfolio Growth</h3>
+          {growthData.length > 0 ? (
+            <ResponsiveContainer width="100%" height={280}>
+              <BarChart data={growthData}>
+                <XAxis dataKey="month" tick={{ fontSize: 12 }} />
+                <YAxis tick={{ fontSize: 12 }} tickFormatter={v => hidden ? '' : v} />
+                <Tooltip cursor={false} content={renderGrowthTooltip} />
+                <Bar dataKey="value" fill="#16a34a" activeBar={{ fill: '#12823b' }} radius={[4, 4, 0, 0]} />
+              </BarChart>
+            </ResponsiveContainer>
+          ) : (
+            <p className="empty-state">Add purchases to see portfolio growth</p>
+          )}
+        </div>
+      </div>
+
+      <div className="card" style={{ marginBottom: '1.5rem' }}>
+        <h3><FiAlertTriangle style={{ color: 'var(--warning)' }} /> Below Ceiling Price</h3>
+        {data.alerts.length > 0 ? (
+          <table>
+            <thead>
+              <tr><th>Ticker</th><th>Current</th><th>Ceiling</th></tr>
+            </thead>
+            <tbody>
+              {data.alerts.map(a => (
+                <tr key={a.ticker}>
+                  <td><strong>{a.ticker}</strong></td>
+                  <td>{fmt(a.currentPrice)}</td>
+                  <td>{fmt(a.ceilingPrice)}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        ) : (
+          <p className="empty-state">No assets below ceiling price</p>
+        )}
       </div>
 
       {categories.map(cat => {
@@ -245,46 +329,6 @@ export default function Dashboard() {
           </div>
         );
       })}
-
-      <div className="dashboard-grid">
-        <div className="card">
-          <h3>Distribution by Category</h3>
-          {pieData.length > 0 ? (
-            <ResponsiveContainer width="100%" height={280}>
-              <PieChart>
-                <Pie data={pieData} dataKey="value" nameKey="name" cx="50%" cy="50%" outerRadius={100} label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}>
-                  {pieData.map((_, i) => <Cell key={i} fill={COLORS[i % COLORS.length]} />)}
-                </Pie>
-                <Tooltip formatter={v => fmt(v)} />
-              </PieChart>
-            </ResponsiveContainer>
-          ) : (
-            <p className="empty-state">Add assets to see the distribution</p>
-          )}
-        </div>
-
-        <div className="card">
-          <h3><FiAlertTriangle style={{ color: 'var(--warning)' }} /> Below Ceiling Price</h3>
-          {data.alerts.length > 0 ? (
-            <table>
-              <thead>
-                <tr><th>Ticker</th><th>Current</th><th>Ceiling</th></tr>
-              </thead>
-              <tbody>
-                {data.alerts.map(a => (
-                  <tr key={a.ticker}>
-                    <td><strong>{a.ticker}</strong></td>
-                    <td>{fmt(a.currentPrice)}</td>
-                    <td>{fmt(a.ceilingPrice)}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          ) : (
-            <p className="empty-state">No assets below ceiling price</p>
-          )}
-        </div>
-      </div>
     </div>
   );
 }

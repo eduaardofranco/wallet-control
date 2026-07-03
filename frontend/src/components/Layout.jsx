@@ -14,7 +14,7 @@ export default function Layout() {
           <span className="user-name">{user?.name}</span>
         </div>
         <nav className="sidebar-nav">
-          <NavLink to="/" end><FiHome /> Dashboard</NavLink>
+          <NavLink to="/" end><FiHome /> Overview</NavLink>
           <NavLink to="/purchases"><FiPieChart /> Purchases</NavLink>
           <NavLink to="/dividends"><FiDollarSign /> Dividends</NavLink>
         </nav>
