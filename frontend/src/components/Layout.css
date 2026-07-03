@@ -16,9 +16,11 @@
   bottom: 0;
 }
 
-.sidebar-header h2 {
-  font-size: 1.3rem;
-  margin-bottom: 0.2rem;
+.sidebar-logo {
+  width: 130px;
+  height: auto;
+  display: block;
+  margin-bottom: 0.4rem;
 }
 
 .sidebar-header .user-name {

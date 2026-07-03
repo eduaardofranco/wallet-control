@@ -10,7 +10,7 @@ export default function Layout() {
     <div className="layout">
       <aside className="sidebar">
         <div className="sidebar-header">
-          <h2>Wallet</h2>
+          <img src="/wallet-logo.png" alt="My Wallet" className="sidebar-logo" />
           <span className="user-name">{user?.name}</span>
         </div>
         <nav className="sidebar-nav">
