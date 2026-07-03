@@ -17,22 +17,32 @@ function fmt(v) {
   return v.toLocaleString('en-US', { style: 'currency', currency: 'BRL' });
 }
 
-export default function Purchases() {
-  const [purchases, setPurchases] = useState([]);
+function endpointFor(type) {
+  return type === 'SELL' ? '/sales' : '/purchases';
+}
+
+export default function Transactions() {
+  const [transactions, setTransactions] = useState([]);
   const [filter, setFilter] = useState('');
   const [showForm, setShowForm] = useState(false);
-  const [editing, setEditing] = useState(null);
-  const [form, setForm] = useState({ ticker: '', category: 'ACAO', quantity: '', price: '', date: '' });
+  const [editing, setEditing] = useState(null); // { id, type }
+  const [form, setForm] = useState({ ticker: '', category: 'ACAO', type: 'BUY', quantity: '', price: '', date: '' });
   const [error, setError] = useState('');
 
-  function loadPurchases() {
-    api.get('/purchases').then(r => setPurchases(r.data));
+  function loadTransactions() {
+    Promise.all([api.get('/purchases'), api.get('/sales')]).then(([p, s]) => {
+      const merged = [
+        ...p.data.map(t => ({ ...t, type: 'BUY' })),
+        ...s.data.map(t => ({ ...t, type: 'SELL' })),
+      ].sort((a, b) => b.date.localeCompare(a.date));
+      setTransactions(merged);
+    });
   }
 
-  useEffect(() => { loadPurchases(); }, []);
+  useEffect(() => { loadTransactions(); }, []);
 
   function resetForm() {
-    setForm({ ticker: '', category: 'ACAO', quantity: '', price: '', date: '' });
+    setForm({ ticker: '', category: 'ACAO', type: 'BUY', quantity: '', price: '', date: '' });
     setEditing(null);
     setShowForm(false);
     setError('');
@@ -43,13 +53,13 @@ export default function Purchases() {
     setError('');
     try {
       if (editing) {
-        await api.put(`/purchases/${editing}`, {
+        await api.put(`${endpointFor(editing.type)}/${editing.id}`, {
           quantity: Number(form.quantity) || 0,
           price: Number(form.price) || 0,
           date: form.date,
         });
       } else {
-        await api.post('/purchases', {
+        await api.post(endpointFor(form.type), {
           ticker: form.ticker,
           category: form.category,
           quantity: Number(form.quantity) || 0,
@@ -58,38 +68,39 @@ export default function Purchases() {
         });
       }
       resetForm();
-      loadPurchases();
+      loadTransactions();
     } catch (err) {
-      setError(err.response?.data?.error || 'Error saving purchase');
+      setError(err.response?.data?.error || 'Error saving transaction');
     }
   }
 
-  function startEdit(p) {
+  function startEdit(t) {
     setForm({
-      ticker: p.asset.ticker,
-      category: p.asset.category,
-      quantity: String(p.quantity),
-      price: String(p.price),
-      date: p.date.slice(0, 10),
+      ticker: t.asset.ticker,
+      category: t.asset.category,
+      type: t.type,
+      quantity: String(t.quantity),
+      price: String(t.price),
+      date: t.date.slice(0, 10),
     });
-    setEditing(p.id);
+    setEditing({ id: t.id, type: t.type });
     setShowForm(true);
   }
 
-  async function handleDelete(id) {
-    if (!confirm('Remove this purchase?')) return;
-    await api.delete(`/purchases/${id}`);
-    loadPurchases();
+  async function handleDelete(t) {
+    if (!confirm(`Remove this ${t.type === 'SELL' ? 'sale' : 'purchase'}?`)) return;
+    await api.delete(`${endpointFor(t.type)}/${t.id}`);
+    loadTransactions();
   }
 
-  const filtered = filter ? purchases.filter(p => p.asset.category === filter) : purchases;
+  const filtered = filter ? transactions.filter(t => t.asset.category === filter) : transactions;
 
   return (
     <div>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
-        <h1 className="page-title" style={{ margin: 0 }}>Purchases</h1>
+        <h1 className="page-title" style={{ margin: 0 }}>Transactions</h1>
         <button className="btn-primary" onClick={() => { resetForm(); setShowForm(true); }}>
-          <FiPlus style={{ marginRight: 4 }} /> New Purchase
+          <FiPlus style={{ marginRight: 4 }} /> New Transaction
         </button>
       </div>
 
@@ -103,10 +114,17 @@ export default function Purchases() {
 
       {showForm && (
         <div className="card" style={{ marginBottom: '1.5rem' }}>
-          <h3 style={{ marginBottom: '1rem' }}>{editing ? 'Edit Purchase' : 'New Purchase'}</h3>
+          <h3 style={{ marginBottom: '1rem' }}>{editing ? `Edit ${editing.type === 'SELL' ? 'Sale' : 'Purchase'}` : 'New Transaction'}</h3>
           {error && <p className="error-msg">{error}</p>}
           <form onSubmit={handleSubmit}>
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))', gap: '0.8rem' }}>
+              <div className="form-group">
+                <label>Type</label>
+                <select value={form.type} onChange={e => setForm({ ...form, type: e.target.value })} disabled={!!editing}>
+                  <option value="BUY">Buy</option>
+                  <option value="SELL">Sell</option>
+                </select>
+              </div>
               <div className="form-group">
                 <label>Ticker</label>
                 <input value={form.ticker} onChange={e => setForm({ ...form, ticker: e.target.value })} required disabled={!!editing} placeholder="E.g.: PETR4, BTC" />
@@ -132,7 +150,7 @@ export default function Purchases() {
             </div>
             {editing && (
               <p style={{ color: 'var(--gray-500)', fontSize: '0.8rem', marginTop: '0.5rem' }}>
-                Ticker and category can&apos;t be changed here — remove the purchase and create a new one if you need to change the asset.
+                Ticker and category can&apos;t be changed here — remove this entry and create a new one if you need to change the asset.
               </p>
             )}
             <div style={{ display: 'flex', gap: '0.5rem', marginTop: '0.5rem' }}>
@@ -149,6 +167,7 @@ export default function Purchases() {
             <tr>
               <th>Ticker</th>
               <th>Category</th>
+              <th>Type</th>
               <th>Quantity</th>
               <th>Date</th>
               <th>Unit Price</th>
@@ -157,23 +176,35 @@ export default function Purchases() {
             </tr>
           </thead>
           <tbody>
-            {filtered.map(p => (
-              <tr key={p.id}>
-                <td><Link to={`/assets/${p.assetId}`}><strong>{p.asset.ticker}</strong></Link></td>
-                <td><span className={`badge badge-${p.asset.category.toLowerCase()}`}>{CATEGORIES.find(c => c.value === p.asset.category)?.label || p.asset.category}</span></td>
-                <td>{p.quantity}</td>
-                <td>{new Date(p.date).toLocaleDateString('en-US', { timeZone: 'UTC' })}</td>
-                <td>{fmt(p.price)}</td>
-                <td>{fmt(p.quantity * p.price)}</td>
+            {filtered.map(t => (
+              <tr key={`${t.type}-${t.id}`}>
+                <td><Link to={`/assets/${t.assetId}`}><strong>{t.asset.ticker}</strong></Link></td>
+                <td><span className={`badge badge-${t.asset.category.toLowerCase()}`}>{CATEGORIES.find(c => c.value === t.asset.category)?.label || t.asset.category}</span></td>
+                <td>
+                  <span style={{
+                    fontSize: '0.75rem',
+                    fontWeight: 600,
+                    padding: '0.15rem 0.5rem',
+                    borderRadius: 999,
+                    color: t.type === 'SELL' ? 'var(--danger)' : 'var(--success)',
+                    background: t.type === 'SELL' ? 'rgba(220,38,38,0.1)' : 'rgba(22,163,74,0.1)',
+                  }}>
+                    {t.type === 'SELL' ? 'Sell' : 'Buy'}
+                  </span>
+                </td>
+                <td>{t.quantity}</td>
+                <td>{new Date(t.date).toLocaleDateString('en-US', { timeZone: 'UTC' })}</td>
+                <td>{fmt(t.price)}</td>
+                <td>{fmt(t.quantity * t.price)}</td>
                 <td>
                   <div style={{ display: 'flex', gap: '0.3rem' }}>
-                    <button className="btn-outline" style={{ padding: '0.3rem 0.5rem' }} onClick={() => startEdit(p)}><FiEdit2 /></button>
-                    <button className="btn-outline" style={{ padding: '0.3rem 0.5rem', color: 'var(--danger)' }} onClick={() => handleDelete(p.id)}><FiTrash2 /></button>
+                    <button className="btn-outline" style={{ padding: '0.3rem 0.5rem' }} onClick={() => startEdit(t)}><FiEdit2 /></button>
+                    <button className="btn-outline" style={{ padding: '0.3rem 0.5rem', color: 'var(--danger)' }} onClick={() => handleDelete(t)}><FiTrash2 /></button>
                   </div>
                 </td>
               </tr>
             ))}
-            {filtered.length === 0 && <tr><td colSpan={7} className="empty-state">No purchases registered</td></tr>}
+            {filtered.length === 0 && <tr><td colSpan={8} className="empty-state">No transactions registered</td></tr>}
           </tbody>
         </table>
       </div>

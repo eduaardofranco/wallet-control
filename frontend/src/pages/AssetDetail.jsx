@@ -25,7 +25,7 @@ export default function AssetDetail() {
   const [purchaseError, setPurchaseError] = useState('');
 
   function load() {
-    api.get(`/assets/${id}`).then(r => setAsset(r.data)).catch(() => navigate('/purchases'));
+    api.get(`/assets/${id}`).then(r => setAsset(r.data)).catch(() => navigate('/transactions'));
   }
 
   useEffect(() => { load(); }, [id]);
@@ -88,7 +88,7 @@ export default function AssetDetail() {
 
   return (
     <div>
-      <button className="btn-outline" onClick={() => navigate('/purchases')} style={{ marginBottom: '1rem' }}>
+      <button className="btn-outline" onClick={() => navigate('/transactions')} style={{ marginBottom: '1rem' }}>
         <FiArrowLeft style={{ marginRight: 4 }} /> Back
       </button>
 

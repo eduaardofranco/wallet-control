@@ -15,7 +15,7 @@ export default function Layout() {
         </div>
         <nav className="sidebar-nav">
           <NavLink to="/" end><FiHome /> Overview</NavLink>
-          <NavLink to="/purchases"><FiPieChart /> Purchases</NavLink>
+          <NavLink to="/transactions"><FiPieChart /> Transactions</NavLink>
           <NavLink to="/dividends"><FiDollarSign /> Dividends</NavLink>
         </nav>
         <button className="logout-btn" onClick={logout}>

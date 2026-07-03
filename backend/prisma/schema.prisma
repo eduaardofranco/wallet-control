@@ -27,6 +27,7 @@ model Asset {
   user         User       @relation(fields: [userId], references: [id])
   dividends    Dividend[]
   purchases    Purchase[]
+  sales        Sale[]
   createdAt    DateTime   @default(now())
   updatedAt    DateTime   @updatedAt
 
@@ -45,6 +46,15 @@ model Dividend {
 }
 
 model Purchase {
+  id       Int      @id @default(autoincrement())
+  quantity Float
+  price    Float
+  date     DateTime
+  assetId  Int
+  asset    Asset    @relation(fields: [assetId], references: [id], onDelete: Cascade)
+}
+
+model Sale {
   id       Int      @id @default(autoincrement())
   quantity Float
   price    Float

@@ -1,13 +1,13 @@
 import { PrismaClient } from '@prisma/client';
 import { fetchUsdBrl, isCrypto } from '../services/prices.js';
-import { aggregatePurchases } from '../services/purchases.js';
+import { aggregatePosition } from '../services/purchases.js';
 
 const prisma = new PrismaClient();
 
 export async function overview(req, res) {
   const allAssets = await prisma.asset.findMany({
     where: { userId: req.userId },
-    include: { dividends: true, purchases: true },
+    include: { dividends: true, purchases: true, sales: true },
   });
 
   // The dashboard mirrors the Purchases page: an asset with no purchases logged isn't a real position.
@@ -16,7 +16,7 @@ export async function overview(req, res) {
   const usdBrl = await fetchUsdBrl();
 
   for (const asset of assets) {
-    const { quantity, averagePrice } = aggregatePurchases(asset.purchases);
+    const { quantity, averagePrice } = aggregatePosition(asset.purchases, asset.sales);
     asset.quantity = quantity;
     asset.averagePrice = averagePrice;
   }

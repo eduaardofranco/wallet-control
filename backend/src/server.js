@@ -4,6 +4,7 @@ import authRoutes from './routes/auth.js';
 import assetRoutes from './routes/assets.js';
 import dividendRoutes from './routes/dividends.js';
 import purchaseRoutes from './routes/purchases.js';
+import saleRoutes from './routes/sales.js';
 import dashboardRoutes from './routes/dashboard.js';
 
 const app = express();
@@ -16,6 +17,7 @@ app.use('/api/auth', authRoutes);
 app.use('/api/assets', assetRoutes);
 app.use('/api/dividends', dividendRoutes);
 app.use('/api/purchases', purchaseRoutes);
+app.use('/api/sales', saleRoutes);
 app.use('/api/dashboard', dashboardRoutes);
 
 app.listen(PORT, () => {

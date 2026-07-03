@@ -1,6 +1,6 @@
 import { PrismaClient } from '@prisma/client';
 import { fetchUsdBrl, isCrypto, resolveName } from '../services/prices.js';
-import { aggregatePurchases } from '../services/purchases.js';
+import { aggregatePosition, aggregatePurchases } from '../services/purchases.js';
 
 const prisma = new PrismaClient();
 
@@ -11,14 +11,14 @@ export async function list(req, res) {
 
   const assets = await prisma.asset.findMany({
     where,
-    include: { dividends: true, purchases: true },
+    include: { dividends: true, purchases: true, sales: true },
     orderBy: { ticker: 'asc' },
   });
 
   const usdBrl = await fetchUsdBrl();
 
   const result = assets.map(asset => {
-    const { quantity, averagePrice } = aggregatePurchases(asset.purchases);
+    const { quantity, averagePrice } = aggregatePosition(asset.purchases, asset.sales);
     const enriched = { ...asset, quantity, averagePrice };
     if (isCrypto(asset.ticker)) {
       enriched.averagePriceBrl = averagePrice * usdBrl;
@@ -36,11 +36,12 @@ export async function getById(req, res) {
     include: {
       dividends: { orderBy: { date: 'desc' } },
       purchases: { orderBy: { date: 'desc' } },
+      sales: { orderBy: { date: 'desc' } },
     },
   });
   if (!asset) return res.status(404).json({ error: 'Asset not found' });
 
-  const { quantity, averagePrice } = aggregatePurchases(asset.purchases);
+  const { quantity, averagePrice } = aggregatePosition(asset.purchases, asset.sales);
   res.json({ ...asset, quantity, averagePrice });
 }
 
@@ -102,9 +103,9 @@ export async function update(req, res) {
 
     const updated = await prisma.asset.findUnique({
       where: { id: Number(req.params.id) },
-      include: { purchases: true },
+      include: { purchases: true, sales: true },
     });
-    res.json({ ...updated, ...aggregatePurchases(updated.purchases) });
+    res.json({ ...updated, ...aggregatePosition(updated.purchases, updated.sales) });
   } catch {
     res.status(500).json({ error: 'Error updating asset' });
   }
