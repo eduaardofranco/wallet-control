@@ -28,6 +28,7 @@ const MASK = '•••••';
 export default function Dashboard() {
   const [data, setData] = useState(null);
   const [purchases, setPurchases] = useState([]);
+  const [sales, setSales] = useState([]);
   const [openCats, setOpenCats] = useState({});
   const [hidden, setHidden] = useState(false);
   const [editingId, setEditingId] = useState(null);
@@ -40,6 +41,7 @@ export default function Dashboard() {
   function load() {
     api.get('/dashboard').then(r => setData(r.data));
     api.get('/purchases').then(r => setPurchases(r.data));
+    api.get('/sales').then(r => setSales(r.data));
   }
 
   useEffect(() => { load(); }, []);
@@ -77,6 +79,11 @@ export default function Dashboard() {
     const month = p.date.slice(0, 7);
     const amountBrl = p.quantity * p.price * (p.asset.category === 'CRIPTO' ? data.usdBrl : 1);
     investedByMonth[month] = (investedByMonth[month] || 0) + amountBrl;
+  }
+  for (const s of sales) {
+    const month = s.date.slice(0, 7);
+    const amountBrl = s.quantity * s.price * (s.asset.category === 'CRIPTO' ? data.usdBrl : 1);
+    investedByMonth[month] = (investedByMonth[month] || 0) - amountBrl;
   }
   let cumulativeInvested = 0;
   const growthData = Object.keys(investedByMonth).sort().map(month => {
