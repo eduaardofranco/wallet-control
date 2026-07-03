@@ -10,6 +10,11 @@ function pct(v) {
   return v.toFixed(2) + '%';
 }
 
+function fmtCompact(v) {
+  if (Math.abs(v) >= 1000) return `R$ ${Math.round(v / 1000)}k`;
+  return `R$ ${v}`;
+}
+
 export default function Dividends() {
   const [summary, setSummary] = useState(null);
   const [portfolioValue, setPortfolioValue] = useState(0);
@@ -66,6 +71,7 @@ export default function Dividends() {
               data={monthlyData}
               height={300}
               tooltipFormatter={v => monthlyView === 'percent' ? pct(v) : fmt(v)}
+              yTickFormatter={v => monthlyView === 'percent' ? `${v.toFixed(1)}%` : fmtCompact(v)}
             />
           ) : (
             <p className="empty-state">No dividends registered</p>
