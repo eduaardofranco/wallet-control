@@ -19,6 +19,10 @@ function fmtRaw(v) {
   return v.toLocaleString('en-US', { style: 'currency', currency: 'BRL' });
 }
 
+function fmtUsdRaw(v) {
+  return v.toLocaleString('en-US', { style: 'currency', currency: 'USD' });
+}
+
 function pctRaw(v) {
   return v.toFixed(2) + '%';
 }
@@ -36,6 +40,8 @@ export default function Dashboard() {
   const [pieView, setPieView] = useState('category');
 
   const fmt = (v) => hidden ? MASK : fmtRaw(v);
+  const fmtUsd = (v) => hidden ? MASK : fmtUsdRaw(v);
+  const fmtAsset = (v, isCrypto) => isCrypto ? fmtUsd(v) : fmt(v);
   const pct = (v) => hidden ? MASK : pctRaw(v);
 
   function load() {
@@ -206,7 +212,7 @@ export default function Dashboard() {
               {data.alerts.map(a => (
                 <tr key={a.ticker}>
                   <td><strong>{a.ticker}</strong></td>
-                  <td>{fmt(a.currentPrice)}</td>
+                  <td>{fmtAsset(a.currentPrice, a.isCrypto)}</td>
                   <td>{fmt(a.ceilingPrice)}</td>
                 </tr>
               ))}
@@ -221,7 +227,11 @@ export default function Dashboard() {
         const assets = assetsByCategory[cat];
         const isOpen = openCats[cat] !== false;
         const catInfo = data.byCategory[cat] || {};
+        const isCryptoCategory = cat === 'CRIPTO';
         const totalBalance = assets.reduce((s, a) => s + a.balance, 0);
+        const totalBalanceDisplay = isCryptoCategory
+          ? assets.reduce((s, a) => s + a.quantity * a.currentPrice, 0)
+          : totalBalance;
         const totalInvested = catInfo.invested || 0;
         const priceChange = totalInvested > 0 ? ((totalBalance - totalInvested) / totalInvested) * 100 : 0;
         const returnPct = priceChange;
@@ -241,7 +251,7 @@ export default function Dashboard() {
                 </div>
                 <div className="cat-stat">
                   <span className="cat-stat-label">Total value</span>
-                  <span className="cat-stat-value">{fmt(totalBalance)}</span>
+                  <span className="cat-stat-value">{fmtAsset(totalBalanceDisplay, isCryptoCategory)}</span>
                 </div>
                 <div className="cat-stat">
                   <span className="cat-stat-label">Change</span>
@@ -286,10 +296,11 @@ export default function Dashboard() {
                           </Link>
                         </td>
                         <td>{a.quantity % 1 === 0 ? a.quantity : a.quantity.toFixed(8).replace(/0+$/, '')}</td>
-                        <td>{a.isCrypto ? <span title={`US$ ${a.averagePrice.toFixed(2)}`}>{fmt(a.averagePriceBrl)}</span> : fmt(a.averagePrice)}</td>
+                        <td>{fmtAsset(a.averagePrice, a.isCrypto)}</td>
                         <td>
                           {editingId === a.id && !hidden ? (
                             <div style={{ display: 'flex', alignItems: 'center', gap: '0.3rem' }}>
+                              {a.isCrypto && <span style={{ color: 'var(--gray-500)', fontSize: '0.75rem' }}>US$</span>}
                               <input
                                 type="number"
                                 step="0.01"
@@ -307,13 +318,13 @@ export default function Dashboard() {
                             </div>
                           ) : (
                             <span style={{ display: 'inline-flex', alignItems: 'center', gap: '0.4rem' }}>
-                              {fmt(a.currentPrice)}
+                              {fmtAsset(a.currentPrice, a.isCrypto)}
                               {!hidden && (
                                 <FiEdit2
                                   size={13}
                                   style={{ cursor: 'pointer', color: 'var(--gray-500)' }}
                                   onClick={() => startEditPrice(a)}
-                                  title="Update current price"
+                                  title={a.isCrypto ? 'Update current price (USD)' : 'Update current price'}
                                 />
                               )}
                             </span>
@@ -329,7 +340,7 @@ export default function Dashboard() {
                             {pct(a.returnPct)} {a.returnPct >= 0 ? <FiArrowUp size={12} style={{ verticalAlign: 'middle' }} /> : <FiArrowDown size={12} style={{ verticalAlign: 'middle' }} />}
                           </span>
                         </td>
-                        <td style={{ fontWeight: 600 }}>{fmt(a.balance)}</td>
+                        <td style={{ fontWeight: 600 }}>{fmtAsset(a.isCrypto ? a.quantity * a.currentPrice : a.balance, a.isCrypto)}</td>
                         <td>
                           <div className="pct-bar-container">
                             <div className="pct-bar" style={{ width: `${Math.min(a.percentPortfolio, 100)}%` }} />

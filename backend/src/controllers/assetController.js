@@ -22,6 +22,7 @@ export async function list(req, res) {
     const enriched = { ...asset, quantity, averagePrice };
     if (isCrypto(asset.ticker)) {
       enriched.averagePriceBrl = averagePrice * usdBrl;
+      enriched.currentPriceBrl = asset.currentPrice * usdBrl;
       enriched.isCrypto = true;
     }
     return enriched;
@@ -42,7 +43,12 @@ export async function getById(req, res) {
   if (!asset) return res.status(404).json({ error: 'Asset not found' });
 
   const { quantity, averagePrice } = aggregatePosition(asset.purchases, asset.sales);
-  res.json({ ...asset, quantity, averagePrice });
+  const enriched = { ...asset, quantity, averagePrice };
+  if (isCrypto(asset.ticker)) {
+    // averagePrice and currentPrice are both already in USD for crypto — no BRL conversion needed here.
+    enriched.isCrypto = true;
+  }
+  res.json(enriched);
 }
 
 export async function create(req, res) {

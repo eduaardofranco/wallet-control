@@ -27,9 +27,12 @@ export async function overview(req, res) {
   const byCategory = {};
 
   for (const asset of assets) {
-    const avgPriceBrl = isCrypto(asset.ticker) ? asset.averagePrice * usdBrl : asset.averagePrice;
+    const crypto = isCrypto(asset.ticker);
+    // averagePrice/currentPrice are stored in USD for crypto — convert to BRL for portfolio-wide totals.
+    const avgPriceBrl = crypto ? asset.averagePrice * usdBrl : asset.averagePrice;
+    const currentPriceBrl = crypto ? asset.currentPrice * usdBrl : asset.currentPrice;
     const invested = asset.quantity * avgPriceBrl;
-    const current = asset.quantity * asset.currentPrice;
+    const current = asset.quantity * currentPriceBrl;
     totalInvested += invested;
     totalCurrent += current;
 
@@ -46,20 +49,25 @@ export async function overview(req, res) {
   }
 
   const alerts = assets
-    .filter(a => a.ceilingPrice && a.currentPrice <= a.ceilingPrice)
+    .filter(a => {
+      const currentPriceBrl = isCrypto(a.ticker) ? a.currentPrice * usdBrl : a.currentPrice;
+      return a.ceilingPrice && currentPriceBrl <= a.ceilingPrice;
+    })
     .map(a => ({
       ticker: a.ticker,
       currentPrice: a.currentPrice,
       ceilingPrice: a.ceilingPrice,
+      isCrypto: isCrypto(a.ticker),
     }));
 
   const assetList = assets.map(a => {
     const crypto = isCrypto(a.ticker);
     const avgPriceBrl = crypto ? a.averagePrice * usdBrl : a.averagePrice;
+    const currentPriceBrl = crypto ? a.currentPrice * usdBrl : a.currentPrice;
     const invested = a.quantity * avgPriceBrl;
-    const balance = a.quantity * a.currentPrice;
+    const balance = a.quantity * currentPriceBrl;
     const dividendsTotal = a.dividends.reduce((s, d) => s + d.amount, 0);
-    const priceChange = avgPriceBrl > 0 ? ((a.currentPrice - avgPriceBrl) / avgPriceBrl) * 100 : 0;
+    const priceChange = avgPriceBrl > 0 ? ((currentPriceBrl - avgPriceBrl) / avgPriceBrl) * 100 : 0;
     const returnPct = invested > 0 ? ((balance - invested + dividendsTotal) / invested) * 100 : 0;
     return {
       id: a.id,

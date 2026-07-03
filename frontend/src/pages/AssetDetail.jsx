@@ -13,6 +13,10 @@ function fmt(v) {
   return v.toLocaleString('en-US', { style: 'currency', currency: 'BRL' });
 }
 
+function fmtUsd(v) {
+  return v.toLocaleString('en-US', { style: 'currency', currency: 'USD' });
+}
+
 export default function AssetDetail() {
   const { id } = useParams();
   const navigate = useNavigate();
@@ -80,6 +84,7 @@ export default function AssetDetail() {
 
   if (!asset) return <p>Loading...</p>;
 
+  const fmtA = asset.isCrypto ? fmtUsd : fmt;
   const totalInvested = asset.quantity * asset.averagePrice;
   const totalCurrent = asset.quantity * asset.currentPrice;
   const profit = totalCurrent - totalInvested;
@@ -102,19 +107,19 @@ export default function AssetDetail() {
             <div>
               <p style={{ fontSize: '0.8rem', color: 'var(--gray-500)' }}>Current Price</p>
               <p style={{ fontSize: '1.2rem', fontWeight: 700, color: belowCeiling ? 'var(--success)' : undefined }}>
-                {fmt(asset.currentPrice)}
+                {fmtA(asset.currentPrice)}
               </p>
               {asset.ceilingPrice && <p style={{ fontSize: '0.75rem', color: 'var(--gray-500)' }}>Ceiling: {fmt(asset.ceilingPrice)}</p>}
             </div>
             <div>
               <p style={{ fontSize: '0.8rem', color: 'var(--gray-500)' }}>Total Invested</p>
-              <p style={{ fontSize: '1.2rem', fontWeight: 700 }}>{fmt(totalInvested)}</p>
-              <p style={{ fontSize: '0.75rem', color: 'var(--gray-500)' }}>{asset.quantity} x {fmt(asset.averagePrice)}</p>
+              <p style={{ fontSize: '1.2rem', fontWeight: 700 }}>{fmtA(totalInvested)}</p>
+              <p style={{ fontSize: '0.75rem', color: 'var(--gray-500)' }}>{asset.quantity} x {fmtA(asset.averagePrice)}</p>
             </div>
             <div>
               <p style={{ fontSize: '0.8rem', color: 'var(--gray-500)' }}>Profit/Loss</p>
               <p style={{ fontSize: '1.2rem', fontWeight: 700, color: profit >= 0 ? 'var(--success)' : 'var(--danger)' }}>
-                {profit >= 0 ? '+' : ''}{fmt(profit)}
+                {profit >= 0 ? '+' : ''}{fmtA(profit)}
               </p>
             </div>
           </div>
@@ -138,7 +143,7 @@ export default function AssetDetail() {
                 <input type="number" step="any" value={purchaseForm.quantity} onChange={e => setPurchaseForm({ ...purchaseForm, quantity: e.target.value })} required style={{ width: 140 }} />
               </div>
               <div className="form-group" style={{ margin: 0 }}>
-                <label>Unit Price</label>
+                <label>Unit Price {asset.isCrypto ? '(USD)' : ''}</label>
                 <input type="number" step="0.01" value={purchaseForm.price} onChange={e => setPurchaseForm({ ...purchaseForm, price: e.target.value })} required style={{ width: 140 }} />
               </div>
               <div className="form-group" style={{ margin: 0 }}>
@@ -160,8 +165,8 @@ export default function AssetDetail() {
               <tr key={p.id}>
                 <td>{new Date(p.date).toLocaleDateString('en-US', { timeZone: 'UTC' })}</td>
                 <td>{p.quantity}</td>
-                <td>{fmt(p.price)}</td>
-                <td>{fmt(p.quantity * p.price)}</td>
+                <td>{fmtA(p.price)}</td>
+                <td>{fmtA(p.quantity * p.price)}</td>
                 <td>
                   <button className="btn-outline" style={{ padding: '0.2rem 0.4rem', color: 'var(--danger)' }} onClick={() => removePurchase(p.id)}>
                     <FiTrash2 size={14} />
