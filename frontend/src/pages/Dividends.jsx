@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
-import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts';
 import api from '../services/api';
+import GrowthBarChart from '../components/GrowthBarChart';
 
 function fmt(v) {
   return v.toLocaleString('en-US', { style: 'currency', currency: 'BRL' });
@@ -38,19 +38,6 @@ export default function Dividends() {
 
   const total = assetData.reduce((s, d) => s + d.value, 0);
 
-  // Recharts calls this with a props shape we don't control; not a real component.
-  /* eslint-disable react/prop-types */
-  function renderMonthlyTooltip(props) {
-    if (!props.active || !props.payload?.length) return null;
-    return (
-      <div style={{ background: 'white', border: '1px solid var(--gray-200, #e5e7eb)', borderRadius: 6, padding: '0.5rem 0.75rem', fontSize: 13, boxShadow: '0 1px 3px rgba(0,0,0,0.1)' }}>
-        <div style={{ color: 'var(--gray-500)' }}>{props.label}</div>
-        <div style={{ fontWeight: 600 }}>{monthlyView === 'percent' ? pct(props.payload[0].value) : fmt(props.payload[0].value)}</div>
-      </div>
-    );
-  }
-  /* eslint-enable react/prop-types */
-
   return (
     <div>
       <h1 className="page-title">Dividends</h1>
@@ -75,14 +62,11 @@ export default function Dividends() {
             </p>
           )}
           {monthlyData.length > 0 ? (
-            <ResponsiveContainer width="100%" height={300}>
-              <BarChart data={monthlyData}>
-                <XAxis dataKey="month" tick={{ fontSize: 12 }} />
-                <YAxis tick={{ fontSize: 12 }} />
-                <Tooltip cursor={false} content={renderMonthlyTooltip} />
-                <Bar dataKey="value" fill="#16a34a" activeBar={{ fill: '#12823b' }} radius={[4, 4, 0, 0]} />
-              </BarChart>
-            </ResponsiveContainer>
+            <GrowthBarChart
+              data={monthlyData}
+              height={300}
+              tooltipFormatter={v => monthlyView === 'percent' ? pct(v) : fmt(v)}
+            />
           ) : (
             <p className="empty-state">No dividends registered</p>
           )}

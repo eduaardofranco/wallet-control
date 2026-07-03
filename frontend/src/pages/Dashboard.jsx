@@ -1,8 +1,9 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { PieChart, Pie, Cell, BarChart, Bar, XAxis, YAxis, ResponsiveContainer, Tooltip } from 'recharts';
+import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from 'recharts';
 import { FiTrendingUp, FiTrendingDown, FiDollarSign, FiArrowUp, FiArrowDown, FiChevronDown, FiChevronUp, FiEye, FiEyeOff, FiEdit2, FiCheck, FiX } from 'react-icons/fi';
 import api from '../services/api';
+import GrowthBarChart from '../components/GrowthBarChart';
 import './Dashboard.css';
 
 const COLORS = ['#2d2d2d', '#16a34a', '#f59e0b', '#7c3aed', '#c2410c', '#4338ca'];
@@ -25,6 +26,11 @@ function fmtUsdRaw(v) {
 
 function pctRaw(v) {
   return v.toFixed(2) + '%';
+}
+
+function fmtCompact(v) {
+  if (Math.abs(v) >= 1000) return `R$ ${Math.round(v / 1000)}k`;
+  return `R$ ${v}`;
 }
 
 const MASK = '•••••';
@@ -97,19 +103,6 @@ export default function Dashboard() {
     const [year, m] = month.split('-');
     return { month: `${m}/${year.slice(2)}`, value: cumulativeInvested };
   });
-
-  // Recharts calls this with a props shape we don't control; not a real component.
-  /* eslint-disable react/prop-types */
-  function renderGrowthTooltip(props) {
-    if (!props.active || !props.payload?.length) return null;
-    return (
-      <div style={{ background: 'white', border: '1px solid var(--gray-200, #e5e7eb)', borderRadius: 6, padding: '0.5rem 0.75rem', fontSize: 13, boxShadow: '0 1px 3px rgba(0,0,0,0.1)' }}>
-        <div style={{ color: 'var(--gray-500)' }}>{props.label}</div>
-        <div style={{ fontWeight: 600 }}>{fmt(props.payload[0].value)}</div>
-      </div>
-    );
-  }
-  /* eslint-enable react/prop-types */
 
   function toggleCat(cat) {
     setOpenCats(prev => ({ ...prev, [cat]: !prev[cat] }));
@@ -187,14 +180,12 @@ export default function Dashboard() {
         <div className="card">
           <h3>Portfolio Growth</h3>
           {growthData.length > 0 ? (
-            <ResponsiveContainer width="100%" height={280}>
-              <BarChart data={growthData}>
-                <XAxis dataKey="month" tick={{ fontSize: 12 }} />
-                <YAxis tick={{ fontSize: 12 }} tickFormatter={v => hidden ? '' : v} />
-                <Tooltip cursor={false} content={renderGrowthTooltip} />
-                <Bar dataKey="value" fill="#16a34a" activeBar={{ fill: '#12823b' }} radius={[4, 4, 0, 0]} />
-              </BarChart>
-            </ResponsiveContainer>
+            <GrowthBarChart
+              data={growthData}
+              height={280}
+              tooltipFormatter={fmt}
+              yTickFormatter={v => hidden ? '' : fmtCompact(v)}
+            />
           ) : (
             <p className="empty-state">Add purchases to see portfolio growth</p>
           )}
