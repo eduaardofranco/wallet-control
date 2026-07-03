@@ -24,16 +24,32 @@ export default function Dividends() {
 
   const monthlyData = Object.entries(summary.byMonth)
     .sort(([a], [b]) => a.localeCompare(b))
-    .map(([month, value]) => ({
-      month,
-      value: monthlyView === 'percent' && portfolioValue > 0 ? (value / portfolioValue) * 100 : value,
-    }));
+    .map(([month, value]) => {
+      const [year, m] = month.split('-');
+      return {
+        month: `${m}/${year.slice(2)}`,
+        value: monthlyView === 'percent' && portfolioValue > 0 ? (value / portfolioValue) * 100 : value,
+      };
+    });
 
   const assetData = Object.entries(summary.byAsset)
     .sort(([, a], [, b]) => b - a)
     .map(([ticker, value]) => ({ ticker, value }));
 
   const total = assetData.reduce((s, d) => s + d.value, 0);
+
+  // Recharts calls this with a props shape we don't control; not a real component.
+  /* eslint-disable react/prop-types */
+  function renderMonthlyTooltip(props) {
+    if (!props.active || !props.payload?.length) return null;
+    return (
+      <div style={{ background: 'white', border: '1px solid var(--gray-200, #e5e7eb)', borderRadius: 6, padding: '0.5rem 0.75rem', fontSize: 13, boxShadow: '0 1px 3px rgba(0,0,0,0.1)' }}>
+        <div style={{ color: 'var(--gray-500)' }}>{props.label}</div>
+        <div style={{ fontWeight: 600 }}>{monthlyView === 'percent' ? pct(props.payload[0].value) : fmt(props.payload[0].value)}</div>
+      </div>
+    );
+  }
+  /* eslint-enable react/prop-types */
 
   return (
     <div>
@@ -63,8 +79,8 @@ export default function Dividends() {
               <BarChart data={monthlyData}>
                 <XAxis dataKey="month" tick={{ fontSize: 12 }} />
                 <YAxis tick={{ fontSize: 12 }} />
-                <Tooltip formatter={v => monthlyView === 'percent' ? pct(v) : fmt(v)} />
-                <Bar dataKey="value" fill="#16a34a" radius={[4, 4, 0, 0]} />
+                <Tooltip cursor={false} content={renderMonthlyTooltip} />
+                <Bar dataKey="value" fill="#16a34a" activeBar={{ fill: '#12823b' }} radius={[4, 4, 0, 0]} />
               </BarChart>
             </ResponsiveContainer>
           ) : (
