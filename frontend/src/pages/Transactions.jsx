@@ -1,7 +1,9 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { FiPlus, FiTrash2, FiEdit2 } from 'react-icons/fi';
+import { FiPlus, FiTrash2, FiEdit2, FiChevronLeft, FiChevronRight } from 'react-icons/fi';
 import api from '../services/api';
+
+const PAGE_SIZE = 20;
 
 const CATEGORIES = [
   { value: '', label: 'All' },
@@ -28,6 +30,7 @@ export default function Transactions() {
   const [editing, setEditing] = useState(null); // { id, type }
   const [form, setForm] = useState({ ticker: '', category: 'ACAO', type: 'BUY', quantity: '', price: '', date: '' });
   const [error, setError] = useState('');
+  const [page, setPage] = useState(1);
 
   function loadTransactions() {
     Promise.all([api.get('/purchases'), api.get('/sales')]).then(([p, s]) => {
@@ -94,6 +97,14 @@ export default function Transactions() {
   }
 
   const filtered = filter ? transactions.filter(t => t.asset.category === filter) : transactions;
+  const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
+  const currentPage = Math.min(page, totalPages);
+  const paginated = filtered.slice((currentPage - 1) * PAGE_SIZE, currentPage * PAGE_SIZE);
+
+  function changeFilter(value) {
+    setFilter(value);
+    setPage(1);
+  }
 
   return (
     <div>
@@ -106,7 +117,7 @@ export default function Transactions() {
 
       <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '1rem', flexWrap: 'wrap' }}>
         {CATEGORIES.map(c => (
-          <button key={c.value} className={filter === c.value ? 'btn-primary' : 'btn-outline'} onClick={() => setFilter(c.value)}>
+          <button key={c.value} className={filter === c.value ? 'btn-primary' : 'btn-outline'} onClick={() => changeFilter(c.value)}>
             {c.label}
           </button>
         ))}
@@ -176,7 +187,7 @@ export default function Transactions() {
             </tr>
           </thead>
           <tbody>
-            {filtered.map(t => (
+            {paginated.map(t => (
               <tr key={`${t.type}-${t.id}`}>
                 <td><Link to={`/assets/${t.assetId}`}><strong>{t.asset.ticker}</strong></Link></td>
                 <td><span className={`badge badge-${t.asset.category.toLowerCase()}`}>{CATEGORIES.find(c => c.value === t.asset.category)?.label || t.asset.category}</span></td>
@@ -207,6 +218,22 @@ export default function Transactions() {
             {filtered.length === 0 && <tr><td colSpan={8} className="empty-state">No transactions registered</td></tr>}
           </tbody>
         </table>
+
+        {totalPages > 1 && (
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '1rem' }}>
+            <span style={{ fontSize: '0.85rem', color: 'var(--gray-500)' }}>
+              Page {currentPage} of {totalPages} ({filtered.length} transactions)
+            </span>
+            <div style={{ display: 'flex', gap: '0.4rem' }}>
+              <button className="btn-outline" style={{ padding: '0.3rem 0.6rem' }} disabled={currentPage === 1} onClick={() => setPage(p => p - 1)}>
+                <FiChevronLeft />
+              </button>
+              <button className="btn-outline" style={{ padding: '0.3rem 0.6rem' }} disabled={currentPage === totalPages} onClick={() => setPage(p => p + 1)}>
+                <FiChevronRight />
+              </button>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );
