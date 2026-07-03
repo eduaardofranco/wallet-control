@@ -6,18 +6,28 @@ function fmt(v) {
   return v.toLocaleString('en-US', { style: 'currency', currency: 'BRL' });
 }
 
+function pct(v) {
+  return v.toFixed(2) + '%';
+}
+
 export default function Dividends() {
   const [summary, setSummary] = useState(null);
+  const [portfolioValue, setPortfolioValue] = useState(0);
+  const [monthlyView, setMonthlyView] = useState('amount');
 
   useEffect(() => {
     api.get('/dividends/summary').then(r => setSummary(r.data));
+    api.get('/dashboard').then(r => setPortfolioValue(r.data.totalCurrent));
   }, []);
 
   if (!summary) return <p>Loading...</p>;
 
   const monthlyData = Object.entries(summary.byMonth)
     .sort(([a], [b]) => a.localeCompare(b))
-    .map(([month, value]) => ({ month, value }));
+    .map(([month, value]) => ({
+      month,
+      value: monthlyView === 'percent' && portfolioValue > 0 ? (value / portfolioValue) * 100 : value,
+    }));
 
   const assetData = Object.entries(summary.byAsset)
     .sort(([, a], [, b]) => b - a)
@@ -36,13 +46,24 @@ export default function Dividends() {
 
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
         <div className="card">
-          <h3 style={{ marginBottom: '1rem' }}>Dividends by Month</h3>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
+            <h3>Dividends by Month</h3>
+            <select value={monthlyView} onChange={e => setMonthlyView(e.target.value)} style={{ width: 90 }}>
+              <option value="amount">R$</option>
+              <option value="percent">%</option>
+            </select>
+          </div>
+          {monthlyView === 'percent' && (
+            <p style={{ color: 'var(--gray-500)', fontSize: '0.8rem', marginTop: '-0.5rem', marginBottom: '0.8rem' }}>
+              Each bar is that month&apos;s dividends as a % of your portfolio&apos;s current total value ({fmt(portfolioValue)}).
+            </p>
+          )}
           {monthlyData.length > 0 ? (
             <ResponsiveContainer width="100%" height={300}>
               <BarChart data={monthlyData}>
                 <XAxis dataKey="month" tick={{ fontSize: 12 }} />
                 <YAxis tick={{ fontSize: 12 }} />
-                <Tooltip formatter={v => fmt(v)} />
+                <Tooltip formatter={v => monthlyView === 'percent' ? pct(v) : fmt(v)} />
                 <Bar dataKey="value" fill="#16a34a" radius={[4, 4, 0, 0]} />
               </BarChart>
             </ResponsiveContainer>
