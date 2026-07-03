@@ -21,7 +21,7 @@ export async function create(req, res) {
   });
   if (!asset) return res.status(404).json({ error: 'Asset not found' });
 
-  const { amount, date, type } = req.body;
+  const { amount, date, type, quantity, unitPrice } = req.body;
   if (!amount || !date) {
     return res.status(400).json({ error: 'Amount and date are required' });
   }
@@ -31,6 +31,8 @@ export async function create(req, res) {
       amount,
       date: new Date(date),
       type: type || 'DIVIDENDO',
+      quantity: quantity || null,
+      unitPrice: unitPrice || null,
       assetId: asset.id,
     },
   });

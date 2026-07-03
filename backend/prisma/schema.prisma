@@ -34,12 +34,14 @@ model Asset {
 }
 
 model Dividend {
-  id      Int      @id @default(autoincrement())
-  amount  Float
-  date    DateTime
-  type    String   @default("DIVIDENDO")
-  assetId Int
-  asset   Asset    @relation(fields: [assetId], references: [id], onDelete: Cascade)
+  id        Int      @id @default(autoincrement())
+  amount    Float
+  quantity  Float?
+  unitPrice Float?
+  date      DateTime
+  type      String   @default("DIVIDENDO")
+  assetId   Int
+  asset     Asset    @relation(fields: [assetId], references: [id], onDelete: Cascade)
 }
 
 model Purchase {
