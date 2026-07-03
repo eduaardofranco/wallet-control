@@ -32,6 +32,7 @@ export default function Dashboard() {
   const [hidden, setHidden] = useState(false);
   const [editingId, setEditingId] = useState(null);
   const [editValue, setEditValue] = useState('');
+  const [pieView, setPieView] = useState('category');
 
   const fmt = (v) => hidden ? MASK : fmtRaw(v);
   const pct = (v) => hidden ? MASK : pctRaw(v);
@@ -64,10 +65,12 @@ export default function Dashboard() {
     load();
   }
 
-  const pieData = Object.entries(data.byCategory).map(([key, val]) => ({
-    name: CATEGORY_LABELS[key] || key,
-    value: val.current,
-  }));
+  const pieData = pieView === 'asset'
+    ? (data.assetList || []).map(a => ({ name: a.ticker, value: a.balance }))
+    : Object.entries(data.byCategory).map(([key, val]) => ({
+      name: CATEGORY_LABELS[key] || key,
+      value: val.current,
+    }));
 
   const investedByMonth = {};
   for (const p of purchases) {
@@ -147,7 +150,13 @@ export default function Dashboard() {
 
       <div className="dashboard-grid" style={{ marginBottom: '1.5rem' }}>
         <div className="card">
-          <h3>Distribution by Category</h3>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
+            <h3 style={{ marginBottom: 0 }}>Distribution by {pieView === 'asset' ? 'Asset' : 'Category'}</h3>
+            <select value={pieView} onChange={e => setPieView(e.target.value)} style={{ width: 110 }}>
+              <option value="category">Category</option>
+              <option value="asset">Asset</option>
+            </select>
+          </div>
           {pieData.length > 0 ? (
             <ResponsiveContainer width="100%" height={280}>
               <PieChart>
