@@ -28,6 +28,7 @@ model Asset {
   dividends    Dividend[]
   purchases    Purchase[]
   sales        Sale[]
+  projections  Projection[]
   createdAt    DateTime   @default(now())
   updatedAt    DateTime   @updatedAt
 
@@ -43,6 +44,17 @@ model Dividend {
   type      String   @default("DIVIDENDO")
   assetId   Int
   asset     Asset    @relation(fields: [assetId], references: [id], onDelete: Cascade)
+}
+
+model Projection {
+  id               Int      @id @default(autoincrement())
+  year             Int
+  payoutPct        Float?
+  dividendPerShare Float
+  assetId          Int
+  asset            Asset    @relation(fields: [assetId], references: [id], onDelete: Cascade)
+
+  @@unique([assetId, year])
 }
 
 model Purchase {

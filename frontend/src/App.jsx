@@ -7,6 +7,7 @@ import Dashboard from './pages/Dashboard';
 import Transactions from './pages/Transactions';
 import AssetDetail from './pages/AssetDetail';
 import Dividends from './pages/Dividends';
+import Projections from './pages/Projections';
 
 function PrivateRoute({ children }) {
   const { user } = useAuth();
@@ -25,6 +26,7 @@ function App() {
             <Route path="transactions" element={<Transactions />} />
             <Route path="assets/:id" element={<AssetDetail />} />
             <Route path="dividends" element={<Dividends />} />
+            <Route path="projections" element={<Projections />} />
           </Route>
         </Routes>
       </BrowserRouter>

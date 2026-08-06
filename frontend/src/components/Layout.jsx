@@ -1,6 +1,6 @@
 import { NavLink, Outlet } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { FiHome, FiPieChart, FiDollarSign, FiLogOut } from 'react-icons/fi';
+import { FiHome, FiPieChart, FiDollarSign, FiTarget, FiLogOut } from 'react-icons/fi';
 import './Layout.css';
 
 export default function Layout() {
@@ -17,6 +17,7 @@ export default function Layout() {
           <NavLink to="/" end><FiHome /> Overview</NavLink>
           <NavLink to="/transactions"><FiPieChart /> Transactions</NavLink>
           <NavLink to="/dividends"><FiDollarSign /> Dividends</NavLink>
+          <NavLink to="/projections"><FiTarget /> Projections</NavLink>
         </nav>
         <button className="logout-btn" onClick={logout}>
           <FiLogOut /> Log Out
