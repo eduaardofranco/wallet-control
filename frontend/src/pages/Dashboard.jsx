@@ -203,7 +203,7 @@ export default function Dashboard() {
           : totalBalance;
         const totalInvested = catInfo.invested || 0;
         const priceChange = totalInvested > 0 ? ((totalBalance - totalInvested) / totalInvested) * 100 : 0;
-        const returnPct = priceChange;
+        const returnPct = totalInvested > 0 ? ((totalBalance - totalInvested + (catInfo.dividends || 0)) / totalInvested) * 100 : 0;
         const percentPortfolio = data.totalCurrent > 0 ? (totalBalance / data.totalCurrent) * 100 : 0;
 
         return (

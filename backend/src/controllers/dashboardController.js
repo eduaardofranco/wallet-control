@@ -36,15 +36,15 @@ export async function overview(req, res) {
     totalInvested += invested;
     totalCurrent += current;
 
-    for (const d of asset.dividends) {
-      totalDividends += d.amount;
-    }
+    const assetDividends = asset.dividends.reduce((s, d) => s + d.amount, 0);
+    totalDividends += assetDividends;
 
     if (!byCategory[asset.category]) {
-      byCategory[asset.category] = { invested: 0, current: 0, count: 0 };
+      byCategory[asset.category] = { invested: 0, current: 0, dividends: 0, count: 0 };
     }
     byCategory[asset.category].invested += invested;
     byCategory[asset.category].current += current;
+    byCategory[asset.category].dividends += assetDividends;
     byCategory[asset.category].count += 1;
   }
 
