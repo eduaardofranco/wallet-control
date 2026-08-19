@@ -7,6 +7,7 @@ import purchaseRoutes from './routes/purchases.js';
 import saleRoutes from './routes/sales.js';
 import dashboardRoutes from './routes/dashboard.js';
 import projectionRoutes from './routes/projections.js';
+import goalRoutes from './routes/goals.js';
 
 const app = express();
 const PORT = process.env.PORT || 3001;
@@ -21,6 +22,7 @@ app.use('/api/purchases', purchaseRoutes);
 app.use('/api/sales', saleRoutes);
 app.use('/api/dashboard', dashboardRoutes);
 app.use('/api/projections', projectionRoutes);
+app.use('/api/goals', goalRoutes);
 
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);

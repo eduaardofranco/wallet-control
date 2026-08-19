@@ -96,10 +96,11 @@ export async function create(req, res) {
 
 export async function update(req, res) {
   try {
-    const { category, currentPrice } = req.body;
+    const { category, currentPrice, goalQuantity } = req.body;
     const data = {};
     if (category !== undefined) data.category = category;
     if (currentPrice !== undefined) data.currentPrice = currentPrice;
+    if (goalQuantity !== undefined) data.goalQuantity = goalQuantity;
 
     const result = await prisma.asset.updateMany({
       where: { id: Number(req.params.id), userId: req.userId },
