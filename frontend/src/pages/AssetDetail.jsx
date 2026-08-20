@@ -3,12 +3,6 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { FiArrowLeft, FiPlus, FiTrash2 } from 'react-icons/fi';
 import api from '../services/api';
 
-const DIVIDEND_TYPE_LABELS = {
-  DIVIDENDO: 'Dividend',
-  JCP: 'JCP',
-  RENDIMENTO: 'Yield',
-};
-
 function fmt(v) {
   return v.toLocaleString('en-US', { style: 'currency', currency: 'BRL' });
 }
@@ -21,11 +15,8 @@ export default function AssetDetail() {
   const { id } = useParams();
   const navigate = useNavigate();
   const [asset, setAsset] = useState(null);
-  const [showDividendForm, setShowDividendForm] = useState(false);
-  const [divForm, setDivForm] = useState({ amount: '', date: '', type: 'DIVIDENDO', quantity: '', unitPrice: '' });
   const [showPurchaseForm, setShowPurchaseForm] = useState(false);
   const [purchaseForm, setPurchaseForm] = useState({ quantity: '', price: '', date: '' });
-  const [error, setError] = useState('');
   const [purchaseError, setPurchaseError] = useState('');
 
   function load() {
@@ -33,31 +24,6 @@ export default function AssetDetail() {
   }
 
   useEffect(() => { load(); }, [id]);
-
-  async function addDividend(e) {
-    e.preventDefault();
-    setError('');
-    try {
-      await api.post(`/dividends/${id}`, {
-        amount: Number(divForm.amount),
-        date: divForm.date,
-        type: divForm.type,
-        quantity: divForm.quantity ? Number(divForm.quantity) : undefined,
-        unitPrice: divForm.unitPrice ? Number(divForm.unitPrice) : undefined,
-      });
-      setDivForm({ amount: '', date: '', type: 'DIVIDENDO', quantity: '', unitPrice: '' });
-      setShowDividendForm(false);
-      load();
-    } catch (err) {
-      setError(err.response?.data?.error || 'Error adding dividend');
-    }
-  }
-
-  async function removeDividend(divId) {
-    if (!confirm('Remove this dividend?')) return;
-    await api.delete(`/dividends/${divId}`);
-    load();
-  }
 
   async function addPurchase(e) {
     e.preventDefault();
@@ -88,7 +54,6 @@ export default function AssetDetail() {
   const totalInvested = asset.quantity * asset.averagePrice;
   const totalCurrent = asset.quantity * asset.currentPrice;
   const profit = totalCurrent - totalInvested;
-  const totalDividends = asset.dividends.reduce((sum, d) => sum + d.amount, 0);
   const belowCeiling = asset.ceilingPrice && asset.currentPrice <= asset.ceilingPrice;
 
   return (
@@ -175,75 +140,6 @@ export default function AssetDetail() {
               </tr>
             ))}
             {asset.purchases.length === 0 && <tr><td colSpan={5} className="empty-state">No purchases registered</td></tr>}
-          </tbody>
-        </table>
-      </div>
-
-      <div className="card">
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
-          <h3>Dividends ({fmt(totalDividends)} total)</h3>
-          <button className="btn-primary" onClick={() => setShowDividendForm(true)}>
-            <FiPlus style={{ marginRight: 4 }} /> Add
-          </button>
-        </div>
-
-        {showDividendForm && (
-          <div style={{ marginBottom: '1rem', padding: '1rem', background: 'var(--gray-100)', borderRadius: 'var(--radius)' }}>
-            {error && <p className="error-msg">{error}</p>}
-            <form onSubmit={addDividend} style={{ display: 'flex', gap: '0.8rem', flexWrap: 'wrap', alignItems: 'flex-end' }}>
-              <div className="form-group" style={{ margin: 0 }}>
-                <label>Type</label>
-                <select value={divForm.type} onChange={e => setDivForm({ ...divForm, type: e.target.value })} style={{ width: 130 }}>
-                  <option value="DIVIDENDO">Dividend</option>
-                  <option value="JCP">JCP</option>
-                  <option value="RENDIMENTO">Yield</option>
-                </select>
-              </div>
-              <div className="form-group" style={{ margin: 0 }}>
-                <label>Date</label>
-                <input type="date" value={divForm.date} onChange={e => setDivForm({ ...divForm, date: e.target.value })} required style={{ width: 160 }} />
-              </div>
-              <div className="form-group" style={{ margin: 0 }}>
-                <label>Quantity</label>
-                <input type="number" step="any" value={divForm.quantity} onChange={e => setDivForm({ ...divForm, quantity: e.target.value })} placeholder="Optional" style={{ width: 110 }} />
-              </div>
-              <div className="form-group" style={{ margin: 0 }}>
-                <label>Unit Price (R$)</label>
-                <input type="number" step="0.0001" value={divForm.unitPrice} onChange={e => setDivForm({ ...divForm, unitPrice: e.target.value })} placeholder="Optional" style={{ width: 120 }} />
-              </div>
-              <div className="form-group" style={{ margin: 0 }}>
-                <label>Amount (R$)</label>
-                <input type="number" step="0.01" value={divForm.amount} onChange={e => setDivForm({ ...divForm, amount: e.target.value })} required style={{ width: 130 }} />
-              </div>
-              <button type="submit" className="btn-primary">Save</button>
-              <button type="button" className="btn-outline" onClick={() => setShowDividendForm(false)}>Cancel</button>
-            </form>
-            <p style={{ color: 'var(--gray-500)', fontSize: '0.8rem', marginTop: '0.5rem' }}>
-              Quantity and unit price are optional context (as shown on a B3 statement) — Amount is what actually gets counted, since JCP has tax withheld and won&apos;t equal quantity × unit price.
-            </p>
-          </div>
-        )}
-
-        <table>
-          <thead>
-            <tr><th>Date</th><th>Type</th><th>Qty</th><th>Unit Price</th><th>Amount</th><th></th></tr>
-          </thead>
-          <tbody>
-            {asset.dividends.map(d => (
-              <tr key={d.id}>
-                <td>{new Date(d.date).toLocaleDateString('en-US')}</td>
-                <td>{DIVIDEND_TYPE_LABELS[d.type] || d.type}</td>
-                <td>{d.quantity ?? '-'}</td>
-                <td>{d.unitPrice != null ? fmt(d.unitPrice) : '-'}</td>
-                <td style={{ color: 'var(--success)', fontWeight: 600 }}>{fmt(d.amount)}</td>
-                <td>
-                  <button className="btn-outline" style={{ padding: '0.2rem 0.4rem', color: 'var(--danger)' }} onClick={() => removeDividend(d.id)}>
-                    <FiTrash2 size={14} />
-                  </button>
-                </td>
-              </tr>
-            ))}
-            {asset.dividends.length === 0 && <tr><td colSpan={6} className="empty-state">No dividends registered</td></tr>}
           </tbody>
         </table>
       </div>
