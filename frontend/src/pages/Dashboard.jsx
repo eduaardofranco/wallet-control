@@ -197,6 +197,7 @@ export default function Dashboard() {
         const isOpen = openCats[cat] !== false;
         const catInfo = data.byCategory[cat] || {};
         const isCryptoCategory = cat === 'CRIPTO';
+        const hasReturn = cat !== 'CRIPTO' && cat !== 'RENDA_FIXA';
         const totalBalance = assets.reduce((s, a) => s + a.balance, 0);
         const totalBalanceDisplay = isCryptoCategory
           ? assets.reduce((s, a) => s + a.quantity * a.currentPrice, 0)
@@ -205,6 +206,12 @@ export default function Dashboard() {
         const priceChange = totalInvested > 0 ? ((totalBalance - totalInvested) / totalInvested) * 100 : 0;
         const returnPct = totalInvested > 0 ? ((totalBalance - totalInvested + (catInfo.dividends || 0)) / totalInvested) * 100 : 0;
         const percentPortfolio = data.totalCurrent > 0 ? (totalBalance / data.totalCurrent) * 100 : 0;
+        // Profit/Loss is shown in the asset's native currency (USD for crypto, BRL otherwise) rather than
+        // the BRL-converted totals used for the % metrics above, so it needs its own native "invested" figure.
+        const investedDisplay = isCryptoCategory
+          ? assets.reduce((s, a) => s + a.quantity * a.averagePrice, 0)
+          : totalInvested;
+        const profitLoss = totalBalanceDisplay - investedDisplay + (catInfo.dividends || 0);
 
         return (
           <div key={cat} className="category-section">
@@ -226,9 +233,15 @@ export default function Dashboard() {
                   <span className="cat-stat-label">Change</span>
                   <span className={`cat-stat-value ${priceChange >= 0 ? 'positive' : 'negative'}`}>{pct(priceChange)}</span>
                 </div>
+                {hasReturn && (
+                  <div className="cat-stat">
+                    <span className="cat-stat-label">Return</span>
+                    <span className={`cat-stat-value ${returnPct >= 0 ? 'positive' : 'negative'}`}>{pct(returnPct)}</span>
+                  </div>
+                )}
                 <div className="cat-stat">
-                  <span className="cat-stat-label">Return</span>
-                  <span className={`cat-stat-value ${returnPct >= 0 ? 'positive' : 'negative'}`}>{pct(returnPct)}</span>
+                  <span className="cat-stat-label">Profit/Loss</span>
+                  <span className={`cat-stat-value ${profitLoss >= 0 ? 'positive' : 'negative'}`}>{fmtAsset(profitLoss, isCryptoCategory)}</span>
                 </div>
                 <div className="cat-stat">
                   <span className="cat-stat-label">% Portfolio</span>
@@ -250,7 +263,7 @@ export default function Dashboard() {
                       <th>Avg. Price</th>
                       <th>Current Price</th>
                       <th>Change</th>
-                      <th>Return</th>
+                      {hasReturn && <th>Return</th>}
                       <th>Balance</th>
                       <th>% Portfolio</th>
                     </tr>
@@ -304,11 +317,13 @@ export default function Dashboard() {
                             {pct(a.priceChange)} {a.priceChange >= 0 ? <FiArrowUp size={12} /> : <FiArrowDown size={12} />}
                           </span>
                         </td>
-                        <td>
-                          <span style={{ color: a.returnPct >= 0 ? 'var(--success)' : 'var(--danger)', fontWeight: 600 }}>
-                            {pct(a.returnPct)} {a.returnPct >= 0 ? <FiArrowUp size={12} style={{ verticalAlign: 'middle' }} /> : <FiArrowDown size={12} style={{ verticalAlign: 'middle' }} />}
-                          </span>
-                        </td>
+                        {hasReturn && (
+                          <td>
+                            <span style={{ color: a.returnPct >= 0 ? 'var(--success)' : 'var(--danger)', fontWeight: 600 }}>
+                              {pct(a.returnPct)} {a.returnPct >= 0 ? <FiArrowUp size={12} style={{ verticalAlign: 'middle' }} /> : <FiArrowDown size={12} style={{ verticalAlign: 'middle' }} />}
+                            </span>
+                          </td>
+                        )}
                         <td style={{ fontWeight: 600 }}>{fmtAsset(a.isCrypto ? a.quantity * a.currentPrice : a.balance, a.isCrypto)}</td>
                         <td>
                           <div className="pct-bar-container">
