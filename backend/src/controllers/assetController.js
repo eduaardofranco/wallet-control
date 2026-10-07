@@ -20,7 +20,7 @@ export async function list(req, res) {
   const result = assets.map(asset => {
     const { quantity, averagePrice } = aggregatePosition(asset.purchases, asset.sales);
     const enriched = { ...asset, quantity, averagePrice };
-    if (isCrypto(asset.ticker)) {
+    if (isCrypto(asset.category)) {
       enriched.averagePriceBrl = averagePrice * usdBrl;
       enriched.currentPriceBrl = asset.currentPrice * usdBrl;
       enriched.isCrypto = true;
@@ -44,7 +44,7 @@ export async function getById(req, res) {
 
   const { quantity, averagePrice } = aggregatePosition(asset.purchases, asset.sales);
   const enriched = { ...asset, quantity, averagePrice };
-  if (isCrypto(asset.ticker)) {
+  if (isCrypto(asset.category)) {
     // averagePrice and currentPrice are both already in USD for crypto — no BRL conversion needed here.
     enriched.isCrypto = true;
   }

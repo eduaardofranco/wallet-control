@@ -1,7 +1,3 @@
-const CRYPTO_TICKERS = new Set([
-  'BTC', 'ETH', 'XRP', 'SOL', 'ADA', 'DOGE', 'DOT', 'MATIC', 'LINK', 'AVAX',
-]);
-
 const STOCK_NAMES = {
   BBAS3: 'Banco do Brasil', BBSE3: 'BB Seguridade', RANI3: 'Irani',
   PETR4: 'Petrobras PN', VALE3: 'Vale', ITUB4: 'Itaú Unibanco',
@@ -21,8 +17,8 @@ export function resolveName(ticker) {
   return STOCK_NAMES[ticker.toUpperCase()] || ticker.toUpperCase();
 }
 
-export function isCrypto(ticker) {
-  return CRYPTO_TICKERS.has(ticker.toUpperCase());
+export function isCrypto(category) {
+  return category === 'CRIPTO';
 }
 
 export async function fetchUsdBrl() {

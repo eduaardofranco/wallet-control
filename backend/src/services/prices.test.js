@@ -16,10 +16,10 @@ describe('resolveName / isCrypto', () => {
     expect(resolveName('unknown9')).toBe('UNKNOWN9');
   });
 
-  it('identifies crypto tickers case-insensitively', async () => {
+  it('identifies crypto assets by category', async () => {
     const { isCrypto } = await freshPricesModule();
-    expect(isCrypto('btc')).toBe(true);
-    expect(isCrypto('PETR4')).toBe(false);
+    expect(isCrypto('CRIPTO')).toBe(true);
+    expect(isCrypto('ACAO')).toBe(false);
   });
 });
 

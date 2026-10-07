@@ -27,7 +27,7 @@ export async function overview(req, res) {
   const byCategory = {};
 
   for (const asset of assets) {
-    const crypto = isCrypto(asset.ticker);
+    const crypto = isCrypto(asset.category);
     // averagePrice/currentPrice are stored in USD for crypto — convert to BRL for portfolio-wide totals.
     const avgPriceBrl = crypto ? asset.averagePrice * usdBrl : asset.averagePrice;
     const currentPriceBrl = crypto ? asset.currentPrice * usdBrl : asset.currentPrice;
@@ -50,18 +50,18 @@ export async function overview(req, res) {
 
   const alerts = assets
     .filter(a => {
-      const currentPriceBrl = isCrypto(a.ticker) ? a.currentPrice * usdBrl : a.currentPrice;
+      const currentPriceBrl = isCrypto(a.category) ? a.currentPrice * usdBrl : a.currentPrice;
       return a.ceilingPrice && currentPriceBrl <= a.ceilingPrice;
     })
     .map(a => ({
       ticker: a.ticker,
       currentPrice: a.currentPrice,
       ceilingPrice: a.ceilingPrice,
-      isCrypto: isCrypto(a.ticker),
+      isCrypto: isCrypto(a.category),
     }));
 
   const assetList = assets.map(a => {
-    const crypto = isCrypto(a.ticker);
+    const crypto = isCrypto(a.category);
     const avgPriceBrl = crypto ? a.averagePrice * usdBrl : a.averagePrice;
     const currentPriceBrl = crypto ? a.currentPrice * usdBrl : a.currentPrice;
     const invested = a.quantity * avgPriceBrl;
