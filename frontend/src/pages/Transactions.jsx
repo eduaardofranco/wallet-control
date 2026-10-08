@@ -19,6 +19,14 @@ function fmt(v) {
   return v.toLocaleString('en-US', { style: 'currency', currency: 'BRL' });
 }
 
+function fmtUsd(v) {
+  return v.toLocaleString('en-US', { style: 'currency', currency: 'USD' });
+}
+
+function fmtByCategory(v, category) {
+  return category === 'CRIPTO' ? fmtUsd(v) : fmt(v);
+}
+
 function endpointFor(type) {
   return type === 'SELL' ? '/sales' : '/purchases';
 }
@@ -205,8 +213,8 @@ export default function Transactions() {
                 </td>
                 <td>{t.quantity}</td>
                 <td>{new Date(t.date).toLocaleDateString('en-US', { timeZone: 'UTC' })}</td>
-                <td>{fmt(t.price)}</td>
-                <td>{fmt(t.quantity * t.price)}</td>
+                <td>{fmtByCategory(t.price, t.asset.category)}</td>
+                <td>{fmtByCategory(t.quantity * t.price, t.asset.category)}</td>
                 <td>
                   <div style={{ display: 'flex', gap: '0.3rem' }}>
                     <button className="btn-outline" style={{ padding: '0.3rem 0.5rem' }} onClick={() => startEdit(t)}><FiEdit2 /></button>
