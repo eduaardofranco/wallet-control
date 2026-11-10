@@ -206,12 +206,13 @@ export default function Dashboard() {
         const priceChange = totalInvested > 0 ? ((totalBalance - totalInvested) / totalInvested) * 100 : 0;
         const returnPct = totalInvested > 0 ? ((totalBalance - totalInvested + (catInfo.dividends || 0)) / totalInvested) * 100 : 0;
         const percentPortfolio = data.totalCurrent > 0 ? (totalBalance / data.totalCurrent) * 100 : 0;
-        // Profit/Loss is shown in the asset's native currency (USD for crypto, BRL otherwise) rather than
-        // the BRL-converted totals used for the % metrics above, so it needs its own native "invested" figure.
+        // Change/Profit-Loss are shown in the asset's native currency (USD for crypto, BRL otherwise) rather than
+        // the BRL-converted totals used for the % metrics above, so they need their own native "invested" figure.
         const investedDisplay = isCryptoCategory
           ? assets.reduce((s, a) => s + a.quantity * a.averagePrice, 0)
           : totalInvested;
-        const profitLoss = totalBalanceDisplay - investedDisplay + (catInfo.dividends || 0);
+        const changeAmount = totalBalanceDisplay - investedDisplay;
+        const profitLoss = changeAmount + (catInfo.dividends || 0);
 
         return (
           <div key={cat} className="category-section">
@@ -231,7 +232,9 @@ export default function Dashboard() {
                 </div>
                 <div className="cat-stat">
                   <span className="cat-stat-label">Change</span>
-                  <span className={`cat-stat-value ${priceChange >= 0 ? 'positive' : 'negative'}`}>{pct(priceChange)}</span>
+                  <span className={`cat-stat-value ${priceChange >= 0 ? 'positive' : 'negative'}`}>
+                    {fmtAsset(changeAmount, isCryptoCategory)} ({pct(priceChange)})
+                  </span>
                 </div>
                 {hasReturn && (
                   <div className="cat-stat">
@@ -269,7 +272,11 @@ export default function Dashboard() {
                     </tr>
                   </thead>
                   <tbody>
-                    {assets.map(a => (
+                    {assets.map(a => {
+                      const assetInvested = a.quantity * a.averagePrice;
+                      const assetCurrent = a.isCrypto ? a.quantity * a.currentPrice : a.balance;
+                      const assetChangeAmount = assetCurrent - assetInvested;
+                      return (
                       <tr key={a.id}>
                         <td>
                           <Link to={`/assets/${a.id}`} className="asset-cell">
@@ -314,7 +321,7 @@ export default function Dashboard() {
                         </td>
                         <td>
                           <span className={`var-badge ${a.priceChange >= 0 ? 'var-up' : 'var-down'}`}>
-                            {pct(a.priceChange)} {a.priceChange >= 0 ? <FiArrowUp size={12} /> : <FiArrowDown size={12} />}
+                            {fmtAsset(assetChangeAmount, a.isCrypto)} ({pct(a.priceChange)}) {a.priceChange >= 0 ? <FiArrowUp size={12} /> : <FiArrowDown size={12} />}
                           </span>
                         </td>
                         {hasReturn && (
@@ -332,7 +339,8 @@ export default function Dashboard() {
                           </div>
                         </td>
                       </tr>
-                    ))}
+                      );
+                    })}
                   </tbody>
                 </table>
               </div>
